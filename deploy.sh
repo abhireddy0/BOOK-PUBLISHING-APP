@@ -3,8 +3,7 @@
 cd /home/ubuntu/BOOK-PUBLISHING-APP/backend
 
 echo "▶ Pulling latest code from GitHub..."
-git fetch --all
-git reset --hard origin/main   # or 'origin/master' based on your branch
+git pull
 
 echo "▶ Installing dependencies..."
 npm install --production
