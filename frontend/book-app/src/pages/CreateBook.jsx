@@ -182,7 +182,6 @@ export default function CreateBook() {
             </label>
 
             <label className="min-h-[140px] border border-dashed border-slate-300 rounded-xl p-4 cursor-pointer hover:border-slate-500 transition flex items-center gap-4 bg-slate-50/40">
-              {/* Left text */}
               <div className="flex-1 space-y-1">
                 <p className="text-sm font-medium text-slate-700">
                   {coverFile ? "Change cover image" : "Click to upload cover"}
@@ -195,7 +194,6 @@ export default function CreateBook() {
                 </p>
               </div>
 
-              {/* Preview */}
               <div className="w-20 h-24 rounded-md bg-slate-100 overflow-hidden flex items-center justify-center text-[10px] text-slate-400 border border-slate-200">
                 {coverPreview ? (
                   <img

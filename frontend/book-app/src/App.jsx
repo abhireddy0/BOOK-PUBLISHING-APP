@@ -10,7 +10,8 @@ import MyBooks from "./pages/MyBooks";
 import EditBook from "./pages/EditBook";
 import BookDetail from "./pages/BookDetail";
 import MyPurchases from "./pages/MyPurchases";
-import BooksList from "./pages/BooksList"; // ✅ new
+import BooksList from "./pages/BooksList";
+import CreateBook from "./pages/CreateBook"; // ✅ import
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -34,6 +35,26 @@ export default function App() {
 
       {/* Public book detail page (but buying needs login) */}
       <Route path="/books/:id" element={<BookDetail />} />
+
+      {/* Create new book – author only */}
+      <Route
+        path="/books/new"
+        element={
+          <ProtectedRoute allowedRoles={["author"]}>
+            <CreateBook />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Edit book – author only */}
+      <Route
+        path="/books/:id/edit"
+        element={
+          <ProtectedRoute allowedRoles={["author"]}>
+            <EditBook />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Author-only dashboard */}
       <Route
@@ -64,16 +85,14 @@ export default function App() {
           </ProtectedRoute>
         }
       />
-
-      {/* Edit book */}
       <Route
-        path="/books/:id/edit"
-        element={
-          <ProtectedRoute allowedRoles={["author"]}>
-            <EditBook />
-          </ProtectedRoute>
-        }
-      />
+  path="/books/new"
+  element={
+    <ProtectedRoute allowedRoles={["author"]}>
+      <CreateBook />
+    </ProtectedRoute>
+  }
+/>
 
       {/* My purchases / library */}
       <Route

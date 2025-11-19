@@ -1,35 +1,57 @@
 // src/pages/AuthorDashboard.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { serverUrl } from "../config/server";
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { ClipLoader } from "react-spinners";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
+import { serverUrl } from "../config/server";
+
+// Optional charts (make sure recharts is installed: npm i recharts)
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+} from "recharts";
 
 export default function AuthorDashboard() {
   const { user, token } = useSelector((state) => state.user) || {};
-  const finalToken = token || localStorage.getItem("token");
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
   const nav = useNavigate();
 
+  const [stats, setStats] = useState({
+    totalBooks: 0,
+    totalSales: 0,
+    thisMonthRevenue: 0,
+    avgRating: null,
+  });
+  const [loading, setLoading] = useState(true);
+
+  const finalToken = token || localStorage.getItem("token");
+
+  // --- Fetch stats once ---
   useEffect(() => {
     const fetchStats = async () => {
+      if (!finalToken) {
+        setLoading(false);
+        return;
+      }
       try {
-        if (!finalToken) {
-          toast.info("Please login as an author to view dashboard");
-          nav("/login");
-          return;
-        }
         const res = await axios.get(`${serverUrl}/dashboard/author`, {
           headers: { Authorization: `Bearer ${finalToken}` },
         });
-        setStats(res.data);
+        setStats({
+          totalBooks: res.data.totalBooks ?? 0,
+          totalSales: res.data.totalSales ?? 0,
+          thisMonthRevenue: res.data.thisMonthRevenue ?? 0,
+          avgRating: res.data.avgRating ?? null,
+        });
       } catch (err) {
-        console.error("AuthorDashboard error:", err);
+        console.error("Dashboard error:", err);
         toast.error(
-          err?.response?.data?.message || "Failed to load dashboard"
+          err?.response?.data?.message || "Failed to load dashboard stats"
         );
       } finally {
         setLoading(false);
@@ -37,123 +59,173 @@ export default function AuthorDashboard() {
     };
 
     fetchStats();
-  }, [finalToken, nav]);
+  }, [finalToken]);
 
-  if (loading || !stats) {
+  // --- Memoised cards (hook ALWAYS called, data can be anything) ---
+  const summaryCards = useMemo(
+    () => [
+      {
+        label: "Total Books",
+        value: stats.totalBooks,
+        sub: "Books you have published or drafted",
+      },
+      {
+        label: "Total Sales",
+        value: stats.totalSales,
+        sub: "Paid purchases of your books",
+      },
+      {
+        label: "This Month Revenue",
+        value: `₹${stats.thisMonthRevenue}`,
+        sub: "From 1st of this month till now",
+      },
+      {
+        label: "Average Rating",
+        value: stats.avgRating ? stats.avgRating.toFixed(1) : "–",
+        sub: "Based on reader reviews",
+      },
+    ],
+    [stats]
+  );
+
+  // --- Simple fake chart data using stats (purely UI) ---
+  const chartData = useMemo(() => {
+    // Just spread thisMonthRevenue across 6 points for now
+    const base = stats.thisMonthRevenue || 0;
+    return [
+      { label: "Week 1", revenue: base * 0.1 },
+      { label: "Week 2", revenue: base * 0.2 },
+      { label: "Week 3", revenue: base * 0.3 },
+      { label: "Week 4", revenue: base * 0.4 },
+    ];
+  }, [stats.thisMonthRevenue]);
+
+  // --- Loading state ---
+  if (loading) {
     return (
-      <div className="w-screen h-screen flex items-center justify-center bg-slate-950">
+      <div className="w-screen h-screen flex items-center justify-center bg-slate-50">
         <ClipLoader size={40} />
       </div>
     );
   }
 
-  const { totalBooks, totalSales, thisMonthRevenue, avgRating, latestOrders } =
-    stats;
+  // --- If somehow user is not author (should be protected already) ---
+  if (!user || user.role !== "author") {
+    return (
+      <div className="w-screen h-screen flex flex-col items-center justify-center gap-3">
+        <p className="text-lg font-semibold">Author dashboard unavailable</p>
+        <p className="text-sm text-slate-500">
+          You must be logged in as an author to view this page.
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 px-6 py-6">
-      {/* top bar */}
-      <header className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between mb-6">
+    <div className="min-h-screen bg-slate-50 px-6 py-6">
+      {/* Header */}
+      <header className="mb-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Author Dashboard</h1>
-          <p className="text-sm text-slate-400">
-            Welcome back, {user?.name || "Author"} ✍️
+          <h1 className="text-xl md:text-2xl font-semibold text-slate-900 flex items-center gap-2">
+            Welcome back 👋
+          </h1>
+          <p className="text-sm text-slate-500">
+            Here’s a quick view of your author performance.
           </p>
         </div>
 
-        <div className="flex items-center gap-3 text-sm">
+        {/* "Publish new book" action – THIS is the thing you wanted visible */}
+        <div className="flex gap-2">
           <button
-            onClick={() => nav("/my-books")}
-            className="px-3 h-9 rounded-lg bg-slate-800 hover:bg-slate-700"
+            onClick={() => nav("/books/new")}
+            className="h-9 px-4 rounded-lg bg-slate-900 text-white text-sm hover:bg-slate-800"
           >
-            My books
+            + Publish new book
           </button>
           <button
-            onClick={() => nav("/")}
-            className="px-3 h-9 rounded-lg border border-slate-600 hover:bg-slate-800"
+            onClick={() => nav("/my-books")}
+            className="h-9 px-4 rounded-lg border text-sm border-slate-300 hover:bg-slate-100"
           >
-            View store
+            View all my books
           </button>
         </div>
       </header>
 
-      {/* stats cards */}
-      <div className="grid gap-4 md:grid-cols-4 mb-6">
-        <div className="rounded-2xl bg-slate-900/70 border border-slate-800 p-4">
-          <p className="text-xs text-slate-400 mb-1">Total books</p>
-          <p className="text-2xl font-semibold">{totalBooks ?? 0}</p>
-        </div>
-
-        <div className="rounded-2xl bg-slate-900/70 border border-slate-800 p-4">
-          <p className="text-xs text-slate-400 mb-1">Total sales</p>
-          <p className="text-2xl font-semibold">{totalSales ?? 0}</p>
-        </div>
-
-        <div className="rounded-2xl bg-slate-900/70 border border-slate-800 p-4">
-          <p className="text-xs text-slate-400 mb-1">
-            Revenue (this month)
-          </p>
-          <p className="text-2xl font-semibold">
-            ₹{thisMonthRevenue ?? 0}
-          </p>
-        </div>
-
-        <div className="rounded-2xl bg-slate-900/70 border border-slate-800 p-4">
-          <p className="text-xs text-slate-400 mb-1">Average rating</p>
-          {avgRating ? (
-            <p className="text-2xl font-semibold">
-              {avgRating.toFixed(1)}{" "}
-              <span className="text-base text-amber-300">★</span>
+      {/* Summary cards */}
+      <section className="grid gap-4 md:grid-cols-4 mb-6">
+        {summaryCards.map((card) => (
+          <div
+            key={card.label}
+            className="rounded-2xl bg-white border border-slate-200 shadow-sm px-5 py-4 flex flex-col gap-1"
+          >
+            <p className="text-[11px] uppercase tracking-wide text-slate-500">
+              {card.label}
             </p>
-          ) : (
-            <p className="text-sm text-slate-500">No ratings yet</p>
-          )}
-        </div>
-      </div>
-
-      {/* latest orders section */}
-      <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-slate-100">
-            Recent sales
-          </h2>
-          <p className="text-xs text-slate-500">
-            Last {latestOrders?.length || 0} orders
-          </p>
-        </div>
-
-        {(!latestOrders || latestOrders.length === 0) ? (
-          <p className="text-xs text-slate-500">
-            No sales yet. Share your book link with readers!
-          </p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="text-slate-400 border-b border-slate-800">
-                  <th className="py-2 text-left">Book</th>
-                  <th className="py-2 text-left">Amount</th>
-                  <th className="py-2 text-left">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {latestOrders.map((o) => (
-                  <tr key={o.id} className="border-b border-slate-900">
-                    <td className="py-2 pr-2 text-slate-100">
-                      {o.bookTitle}
-                    </td>
-                    <td className="py-2 pr-2 text-slate-300">
-                      ₹{o.amount ?? 0}
-                    </td>
-                    <td className="py-2 text-slate-400">
-                      {new Date(o.createdAt).toLocaleString("en-IN")}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <p className="text-2xl font-semibold text-slate-900">
+              {card.value}
+            </p>
+            <p className="text-[11px] text-slate-500 mt-1">{card.sub}</p>
           </div>
-        )}
+        ))}
+      </section>
+
+      {/* Chart + CTA row */}
+      <section className="grid gap-4 lg:grid-cols-[2fr,1fr]">
+        {/* Revenue chart */}
+        <div className="rounded-2xl bg-white border border-slate-200 shadow-sm p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="text-sm font-medium text-slate-900">
+                Revenue this month
+              </p>
+              <p className="text-xs text-slate-500">
+                Visual overview of your earnings.
+              </p>
+            </div>
+          </div>
+          <div className="w-full h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData}>
+                <defs>
+                  <linearGradient id="rev" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#0f172a" stopOpacity={0.9} />
+                    <stop offset="95%" stopColor="#0f172a" stopOpacity={0.1} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="label" fontSize={11} />
+                <YAxis fontSize={11} />
+                <Tooltip
+                  contentStyle={{ fontSize: 12 }}
+                  formatter={(value) => [`₹${value.toFixed(0)}`, "Revenue"]}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="#0f172a"
+                  fill="url(#rev)"
+                  strokeWidth={2}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Small side card */}
+        <div className="rounded-2xl bg-slate-900 text-white p-4 flex flex-col justify-between">
+          <div>
+            <p className="text-sm font-medium">Tips</p>
+            <p className="text-xs text-slate-300 mt-1">
+              Publish more books and share your StoryVerse link with readers to
+              grow your sales.
+            </p>
+          </div>
+          <button
+            onClick={() => nav("/books/new")}
+            className="mt-3 h-9 rounded-lg bg-white text-slate-900 text-sm hover:bg-slate-100"
+          >
+            Publish another book
+          </button>
+        </div>
       </section>
     </div>
   );

@@ -16,7 +16,10 @@ export default function BooksList() {
   const [sortBy, setSortBy] = useState("latest"); // latest | priceLow | priceHigh
 
   const nav = useNavigate();
-  const { user } = useSelector((state) => state.user) || {};
+  const { user, token } = useSelector((state) => state.user) || {};
+
+  const finalToken = token || localStorage.getItem("token");
+  const isLoggedIn = !!finalToken;
 
   useEffect(() => {
     const fetchBooks = async () => {
@@ -25,9 +28,7 @@ export default function BooksList() {
         setBooks(res.data || []);
       } catch (err) {
         console.error("BooksList error:", err);
-        toast.error(
-          err?.response?.data?.message || "Failed to load books"
-        );
+        toast.error(err?.response?.data?.message || "Failed to load books");
       } finally {
         setLoading(false);
       }
@@ -52,9 +53,7 @@ export default function BooksList() {
         const author = b.author?.name?.toLowerCase() || "";
         const desc = b.description?.toLowerCase() || "";
         return (
-          title.includes(q) ||
-          author.includes(q) ||
-          desc.includes(q)
+          title.includes(q) || author.includes(q) || desc.includes(q)
         );
       });
     }
@@ -82,6 +81,9 @@ export default function BooksList() {
     );
   }
 
+  const displayName = user?.name || "Reader";
+  const userRole = user?.role;
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 px-6 py-6">
       {/* top bar */}
@@ -94,12 +96,13 @@ export default function BooksList() {
         </div>
 
         <div className="flex items-center gap-3 text-sm">
-          {user ? (
+          {isLoggedIn ? (
             <>
               <span className="text-slate-300 hidden sm:inline">
-                Hi, <span className="font-medium">{user.name}</span>
+                Hi, <span className="font-medium">{displayName}</span>
               </span>
-              {user.role === "author" && (
+
+              {userRole === "author" && (
                 <button
                   onClick={() => nav("/my-books")}
                   className="px-3 h-9 rounded-lg bg-slate-800 hover:bg-slate-700"
@@ -107,6 +110,7 @@ export default function BooksList() {
                   My books
                 </button>
               )}
+
               <button
                 onClick={() => nav("/purchases")}
                 className="px-3 h-9 rounded-lg border border-slate-600 hover:bg-slate-800"
