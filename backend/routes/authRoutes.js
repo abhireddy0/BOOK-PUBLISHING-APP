@@ -6,7 +6,7 @@ const { signupValidation, loginValidation } = require("../middleware/validationM
 
 router.post("/signup", signupValidation, signup);
 router.post("/login", loginValidation, login);
-router.post("/logout", loginValidation, logOut);
+router.post("/logout", logOut);
 router.post("/sendotp", sendOtp);
 router.post("/verifyotp", verifyOtp);
 router.post("/resetpassword", resetPassword);

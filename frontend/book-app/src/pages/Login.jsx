@@ -1,3 +1,4 @@
+// src/pages/Login.jsx
 import React, { useState } from "react";
 import { IoEyeOutline, IoEye } from "react-icons/io5";
 import { useNavigate, Link } from "react-router-dom";
@@ -19,16 +20,18 @@ export default function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     if (!email || !password) return toast.error("Email & password required");
+
     try {
       setLoading(true);
-      const data = await login({ email, password }); // { token, user }
+
+      const data = await login({ email, password });
       dispatch(setUserData(data));
       toast.success("Logged in ✨");
 
-      // role-based redirect
+      // Redirects based on role
       if (data.user.role === "admin") nav("/dashboard/admin");
       else if (data.user.role === "author") nav("/dashboard/author");
-      else nav("/"); // reader or default
+      else nav("/"); // reader → explore books (later)
     } catch (err) {
       toast.error(err?.response?.data?.message || "Login failed");
     } finally {
@@ -42,12 +45,13 @@ export default function Login() {
         onSubmit={handleLogin}
         className="w-[900px] h-[520px] bg-white shadow-xl rounded-2xl flex overflow-hidden"
       >
-        {/* left */}
+        {/* LEFT SIDE */}
         <div className="w-1/2 h-full flex flex-col items-center justify-center gap-3 p-6">
           <div className="w-full max-w-[340px]">
             <h1 className="text-2xl font-semibold">Welcome back</h1>
             <p className="text-neutral-600 mb-4">Log in to your account</p>
 
+            {/* Email */}
             <label className="text-sm font-medium">Email</label>
             <input
               className="mt-1 mb-3 h-11 w-full rounded-md border border-neutral-300 px-3 focus:ring-2 focus:ring-black/30"
@@ -57,6 +61,7 @@ export default function Login() {
               onChange={(e) => setEmail(e.target.value)}
             />
 
+            {/* Password */}
             <label className="text-sm font-medium">Password</label>
             <div className="relative">
               <input
@@ -68,37 +73,42 @@ export default function Login() {
               />
               <button
                 type="button"
-                onClick={() => setShow((s) => !s)}
+                onClick={() => setShow(!show)}
                 className="absolute right-3 top-1/2 -translate-y-1/2"
               >
                 {show ? <IoEye /> : <IoEyeOutline />}
               </button>
             </div>
-            <div className="flex justify-end mt-1">
-  <button
-    type="button"
-    onClick={() => nav("/forgot-password")}
-    className="text-xs text-neutral-600 hover:text-black underline"
-  >
-    Forgot password?
-  </button>
-</div>
 
+            <div className="flex justify-end mt-1">
+              <button
+                type="button"
+                onClick={() => nav("/forgot-password")}
+                className="text-xs text-neutral-600 hover:text-black underline"
+              >
+                Forgot password?
+              </button>
+            </div>
+
+            {/* Login button */}
             <button
               type="submit"
               disabled={loading}
               className="mt-4 h-11 w-full rounded-xl bg-black text-white hover:bg-black/90 flex items-center justify-center gap-2"
             >
-              {loading && <ClipLoader size={18} color="#fff" />} Log in
+              {loading && <ClipLoader size={18} color="#fff" />} Login
             </button>
 
             <p className="text-sm text-neutral-600 mt-3">
-              No account? <Link to="/signup" className="underline">Create one</Link>
+              No account?{" "}
+              <Link to="/signup" className="underline">
+                Create one
+              </Link>
             </p>
           </div>
         </div>
 
-        {/* right — StoryVerse branding */}
+        {/* RIGHT SIDE */}
         <div className="w-1/2 h-full bg-black text-white flex items-center justify-center relative">
           <img
             src={cover}
@@ -110,7 +120,7 @@ export default function Login() {
               SV
             </div>
             <h3 className="text-3xl font-semibold">StoryVerse</h3>
-            <p className="text-white/70 text-sm mt-2">Welcome back ✍️</p>
+            <p className="text-white/70 text-sm mt-2">Good to see you again ✍️</p>
           </div>
         </div>
       </form>

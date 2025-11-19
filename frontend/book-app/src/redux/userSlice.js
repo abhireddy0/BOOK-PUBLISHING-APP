@@ -1,21 +1,31 @@
+
 import { createSlice } from "@reduxjs/toolkit";
 
-const stored = localStorage.getItem("bp_auth");
-const initial = stored ? JSON.parse(stored) : { token: "", user: null };
+const storedUser = localStorage.getItem("user");
+const storedToken = localStorage.getItem("token");
+
+const initialState = {
+  user: storedUser ? JSON.parse(storedUser) : null,
+  token: storedToken || null,
+};
 
 const userSlice = createSlice({
-  name: "auth",
-  initialState: initial,
+  name: "user",
+  initialState,
   reducers: {
-    setUserData: (state, { payload }) => {
-      state.token = payload.token;
-      state.user  = payload.user;
-      localStorage.setItem("bp_auth", JSON.stringify(state));
+    setUserData: (state, action) => {
+      const { user, token } = action.payload;
+      state.user = user;
+      state.token = token;
+
+      if (user) localStorage.setItem("user", JSON.stringify(user));
+      if (token) localStorage.setItem("token", token);
     },
     clearUser: (state) => {
-      state.token = "";
       state.user = null;
-      localStorage.removeItem("bp_auth");
+      state.token = null;
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
     },
   },
 });

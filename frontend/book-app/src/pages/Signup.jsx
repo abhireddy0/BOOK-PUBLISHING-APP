@@ -1,27 +1,39 @@
+// src/pages/Signup.jsx
 import React, { useState } from "react";
 import { IoEyeOutline, IoEye } from "react-icons/io5";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { ClipLoader } from "react-spinners";
-import { signup } from "../api/auth"; // only signup now
+import { signup } from "../api/auth";
 import cover from "../assets/cover.png";
 
 export default function Signup() {
   const [show, setShow] = useState(false);
   const nav = useNavigate();
-  const [form, setForm] = useState({ name: "", email: "", password: "", role: "author" });
+
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "reader", // DEFAULT → Reader
+  });
+
   const [loading, setLoading] = useState(false);
 
-  const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const onChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSignup = async (e) => {
     e.preventDefault();
-    if (!form.name || !form.email || !form.password) return toast.error("All fields required");
+
+    if (!form.name || !form.email || !form.password)
+      return toast.error("All fields are required");
+
     try {
       setLoading(true);
       await signup(form);
-      toast.success("Account created 🎉 Please login to continue.");
-      nav("/login"); // ✅ always go to login after signup
+      toast.success("Account created! Please login.");
+      nav("/login");
     } catch (err) {
       toast.error(err?.response?.data?.message || "Signup failed");
     } finally {
@@ -35,12 +47,13 @@ export default function Signup() {
         onSubmit={handleSignup}
         className="w-[900px] h-[520px] bg-white shadow-xl rounded-2xl flex overflow-hidden"
       >
-        {/* left */}
+        {/* LEFT SIDE */}
         <div className="w-1/2 h-full flex flex-col items-center justify-center gap-3 p-6">
           <div className="w-full max-w-[340px]">
-            <h1 className="text-2xl font-semibold">Let's get started</h1>
+            <h1 className="text-2xl font-semibold">Join StoryVerse</h1>
             <p className="text-neutral-600 mb-4">Create your account</p>
 
+            {/* Name */}
             <label className="text-sm font-medium">Name</label>
             <input
               name="name"
@@ -50,6 +63,7 @@ export default function Signup() {
               onChange={onChange}
             />
 
+            {/* Email */}
             <label className="text-sm font-medium">Email</label>
             <input
               name="email"
@@ -60,6 +74,7 @@ export default function Signup() {
               onChange={onChange}
             />
 
+            {/* Password */}
             <label className="text-sm font-medium">Password</label>
             <div className="relative">
               <input
@@ -79,13 +94,13 @@ export default function Signup() {
               </button>
             </div>
 
-            {/* role pills */}
+            {/* Role Buttons */}
             <div className="flex gap-2 mt-3">
-              {["author", "reader"].map((r) => (
+              {["reader", "author"].map((r) => (
                 <button
                   key={r}
                   type="button"
-                  onClick={() => setForm((f) => ({ ...f, role: r }))}
+                  onClick={() => setForm({ ...form, role: r })}
                   className={`px-3 h-9 rounded-full border text-sm ${
                     form.role === r
                       ? "bg-neutral-900 text-white border-neutral-900"
@@ -97,12 +112,13 @@ export default function Signup() {
               ))}
             </div>
 
+            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
               className="mt-4 h-11 w-full rounded-xl bg-black text-white hover:bg-black/90 flex items-center justify-center gap-2"
             >
-              {loading && <ClipLoader size={18} color="#fff" />} Signup
+              {loading && <ClipLoader size={18} color="#fff" />} Sign Up
             </button>
 
             <p className="text-sm text-neutral-600 mt-3">
@@ -114,7 +130,7 @@ export default function Signup() {
           </div>
         </div>
 
-        {/* right - StoryVerse Branding */}
+        {/* RIGHT SIDE */}
         <div className="w-1/2 h-full bg-black text-white flex items-center justify-center relative">
           <img
             src={cover}
@@ -126,7 +142,9 @@ export default function Signup() {
               SV
             </div>
             <h3 className="text-3xl font-semibold">StoryVerse</h3>
-            <p className="text-white/70 text-sm mt-2">Your journey to publishing begins here ✨</p>
+            <p className="text-white/70 text-sm mt-2">
+              Where stories are born ✨
+            </p>
           </div>
         </div>
       </form>

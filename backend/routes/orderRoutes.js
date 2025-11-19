@@ -1,20 +1,19 @@
-
+// routes/orderRoutes.js
 const express = require("express");
 const router = express.Router();
 
 const auth = require("../middleware/authMiddleware");
 const {
-  createOrder,
   getMyOrders,
   checkAccess,
 } = require("../controllers/orderController");
 
+// all routes here require auth
 
-router.post("/orders/:bookId", auth, createOrder);
-
-
+// list all paid orders of current user
 router.get("/orders/my", auth, getMyOrders);
 
+// check if current user has access to a given book
 router.get("/orders/:bookId/access", auth, checkAccess);
 
 module.exports = router;

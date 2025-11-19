@@ -1,44 +1,80 @@
- // controllers/dashboardController.js
+// controllers/dashboardController.js
 const Book = require("../models/bookModel");
 const Order = require("../models/orderModel");
 const Review = require("../models/reviewModel");
 
-const getAuthorDashboard = async (req, res) => {
+const getAuthorStats = async (req, res) => {
   try {
-    const userId = req.user.id;
-    const myBooks = await Book.find({ author: userId }).lean();
-    const myBookIds = myBooks.map(b => b._id);
+    const authorId = req.user.id; // authMiddleware sets { id, role }
 
-    const mySales = await Order.find({ book: { $in: myBookIds }, status: "paid" }).lean();
-    const totalRevenue = mySales.reduce((s, o) => s + (o.amount || 0), 0);
+    // 1) all books by this author
+    const books = await Book.find({ author: authorId }, "_id title");
+    const bookIds = books.map((b) => b._id);
 
-    const reviews = await Review.find({ book: { $in: myBookIds } }).sort({ createdAt: -1 }).lean();
+    const totalBooks = books.length;
+
+    // 2) all PAID orders for this author's books
+    //    (Order schema: { book, buyer, amount, status })
+    const paidOrders = await Order.find({
+      status: "paid",
+      book: { $in: bookIds },
+    })
+      .populate("book", "title author")
+      .sort({ createdAt: -1 });
+
+    const totalSales = paidOrders.length;
+
+    // 3) this month revenue
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), 1); // first of month
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 1); // first of next month
+
+    const thisMonthOrders = paidOrders.filter(
+      (o) => o.createdAt >= start && o.createdAt < end
+    );
+
+    const thisMonthRevenue = thisMonthOrders.reduce(
+      (sum, o) => sum + (o.amount || 0),
+      0
+    );
+
+    // 4) average rating from all reviews for this author's books
+    let avgRating = null;
+    if (bookIds.length > 0) {
+      const reviews = await Review.find(
+        { book: { $in: bookIds } },
+        "rating"
+      );
+      if (reviews.length > 0) {
+        const totalRating = reviews.reduce(
+          (sum, r) => sum + (r.rating || 0),
+          0
+        );
+        avgRating = totalRating / reviews.length;
+      }
+    }
+
+    // optional: top 5 recent orders to show in dashboard
+    const latestOrders = paidOrders.slice(0, 5).map((o) => ({
+      id: o._id,
+      bookTitle: o.book?.title || "Untitled",
+      amount: o.amount,
+      createdAt: o.createdAt,
+    }));
 
     return res.json({
-      booksCount: myBooks.length,
-      totalSales: mySales.length,
-      totalRevenue,
-      recentBooks: myBooks.slice(-5).reverse(),
-      recentReviews: reviews.slice(0, 5),
+      totalBooks,
+      totalSales,
+      thisMonthRevenue,
+      avgRating,
+      latestOrders,
     });
   } catch (err) {
-    console.error("getAuthorDashboard error:", err);
-    return res.status(500).json({ message: "Server error building dashboard" });
+    console.error("Dashboard error:", err);
+    return res.status(500).json({
+      message: "Failed to load dashboard stats",
+    });
   }
 };
 
-const getAdminDashboard = async (req, res) => {
-  try {
-    const bookCount = await Book.countDocuments();
-    const paidOrders = await Order.find({ status: "paid" }).lean();
-    const orderCount = paidOrders.length;
-    const totalRevenue = paidOrders.reduce((s, o) => s + (o.amount || 0), 0);
-
-    return res.json({ bookCount, orderCount, totalRevenue });
-  } catch (err) {
-    console.error("getAdminDashboard error:", err);
-    return res.status(500).json({ message: "Server error building admin dashboard" });
-  }
-};
-
-module.exports = { getAuthorDashboard, getAdminDashboard };
+module.exports = { getAuthorStats };

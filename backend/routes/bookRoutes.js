@@ -19,13 +19,13 @@ const {
 
 // public
 router.get("/", getAllBooks);
-router.get("/:id", getBookById);
-
 router.get("/mine", auth, async (req, res) => {
   const Book = require("../models/bookModel");
   const books = await Book.find({ author: req.user.id }).sort({ createdAt: -1 });
   res.json(books);
 });
+router.get("/:id", getBookById);
+
 
 
 // authors/admins only

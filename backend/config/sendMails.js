@@ -1,5 +1,5 @@
-const nodemailer = require("nodemailer");
 require("dotenv").config();
+const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
@@ -11,7 +11,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// optional: to see if SMTP is ok
+
 transporter.verify((err, success) => {
   if (err) {
     console.log("❌ SMTP error:", err.message);
@@ -21,7 +21,7 @@ transporter.verify((err, success) => {
 });
 
 const sendMail = async (to, otp) => {
-  console.log("DEBUG OTP ->", to, otp); // just for console
+  console.log("DEBUG OTP ->", to, otp); 
 
   return transporter.sendMail({
     from: process.env.EMAIL,
