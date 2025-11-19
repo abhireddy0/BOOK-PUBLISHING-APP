@@ -7,7 +7,7 @@ const app = express();
 const PORT = 9000; // webhook will listen here
 
 // your GitHub webhook secret (set same in GitHub)
-const GITHUB_SECRET = "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";
+const GITHUB_SECRET = "Abhi07";
 
 // to read raw body for signature check
 app.use(
