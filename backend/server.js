@@ -33,7 +33,7 @@ app.use("/", OrderRouter);
 app.use("/", PaymentRouter);
 app.use("/dashboard", DashboardRouter);
 app.use("/gemini", GeminiRouter);
-
+app.use("/status",(req,res)=>{res.send(200)})
 
 const PORT = process.env.PORT || 3990;
 app.listen(PORT, () => {
