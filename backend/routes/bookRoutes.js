@@ -3,7 +3,7 @@ const express = require("express");
 const router = express.Router();
 
 const auth = require("../middleware/authMiddleware");
-const roles = require("../middleware/rolesMiddleware");           // <- name it 'roles' (it's a function)
+const roles = require("../middleware/rolesMiddleware");           
 const { uploadCover, uploadFile } = require("../middleware/uploadMiddleware");
 
 const {
@@ -15,6 +15,7 @@ const {
   uploadBookCover,
   uploadBookFile,
   setPublish,
+  getReadableBook
 } = require("../controllers/bookController");
 
 // public
@@ -24,6 +25,7 @@ router.get("/mine", auth, async (req, res) => {
   const books = await Book.find({ author: req.user.id }).sort({ createdAt: -1 });
   res.json(books);
 });
+router.get("/:id/read", auth, getReadableBook);
 router.get("/:id", getBookById);
 
 

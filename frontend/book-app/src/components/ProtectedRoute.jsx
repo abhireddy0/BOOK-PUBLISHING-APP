@@ -3,26 +3,30 @@ import React from "react";
 import { useSelector } from "react-redux";
 import { Navigate } from "react-router-dom";
 
-export default function ProtectedRoute({ children, allowedRoles }) {
-  const slice = useSelector((state) => state.user); 
-  const userFromStore = slice?.user || null;
-  const tokenFromStore = slice?.token || null;
+export default function ProtectedRoute({ allowedRoles, children }) {
+  const { user, token } = useSelector((state) => state.user) || {};
 
-  const storedUser = localStorage.getItem("user");
-  const storedToken = localStorage.getItem("token");
+  const storedAuth = JSON.parse(
+    localStorage.getItem("storyverse_auth") || "null"
+  );
 
-  const finalUser = userFromStore || (storedUser ? JSON.parse(storedUser) : null);
-  const finalToken = tokenFromStore || storedToken;
+  const finalToken = token || storedAuth?.token;
+  const finalUser = user || storedAuth?.user;
 
-  // not logged in at all
-  if (!finalToken || !finalUser) {
+  // Not logged in at all
+  if (!finalToken) {
     return <Navigate to="/login" replace />;
   }
 
-  // logged in but wrong role
-  if (allowedRoles && !allowedRoles.includes(finalUser.role)) {
-    return <Navigate to="/login" replace />;
+  // Logged in but wrong role
+  if (
+    allowedRoles &&
+    allowedRoles.length > 0 &&
+    (!finalUser || !allowedRoles.includes(finalUser.role))
+  ) {
+    return <Navigate to="/" replace />;
   }
 
+  // OK – show the page
   return children;
 }

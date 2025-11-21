@@ -1,30 +1,37 @@
-
+// src/redux/userSlice.js
 import { createSlice } from "@reduxjs/toolkit";
 
-const storedUser = localStorage.getItem("user");
-const storedToken = localStorage.getItem("token");
+// Read from localStorage on app start
+const storedAuth = JSON.parse(
+  localStorage.getItem("storyverse_auth") || "null"
+);
 
-const initialState = {
-  user: storedUser ? JSON.parse(storedUser) : null,
-  token: storedToken || null,
+const initialState = storedAuth || {
+  user: null,
+  token: null,
 };
 
 const userSlice = createSlice({
   name: "user",
   initialState,
   reducers: {
-    setUserData: (state, action) => {
-      const { user, token } = action.payload;
-      state.user = user;
-      state.token = token;
+    setUserData(state, action) {
+      state.user = action.payload.user || null;
+      state.token = action.payload.token || null;
 
-      if (user) localStorage.setItem("user", JSON.stringify(user));
-      if (token) localStorage.setItem("token", token);
+      // Persist to localStorage (single key)
+      localStorage.setItem(
+        "storyverse_auth",
+        JSON.stringify({ user: state.user, token: state.token })
+      );
+
+      // Backwards-compat if you also use "token" key in axios interceptor
+      if (state.token) localStorage.setItem("token", state.token);
     },
-    clearUser: (state) => {
+    clearUser(state) {
       state.user = null;
       state.token = null;
-      localStorage.removeItem("user");
+      localStorage.removeItem("storyverse_auth");
       localStorage.removeItem("token");
     },
   },

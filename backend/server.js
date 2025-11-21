@@ -23,7 +23,7 @@ const BookRouter = require("./routes/bookRoutes");
 const ReviewRouter = require("./routes/reviewRoutes");
 const OrderRouter = require("./routes/orderRoutes");
 const PaymentRouter = require("./routes/paymentRoutes");
-const DashboardRouter = require("./routes/dashboardRoutes");
+const dashboardRoutes =require("./routes/dashboardRoutes")
 const GeminiRouter = require("./routes/aiRoutes");
 
 app.use("/auth", AuthRouter);
@@ -31,7 +31,7 @@ app.use("/books", BookRouter);
 app.use("/", ReviewRouter);
 app.use("/", OrderRouter);
 app.use("/", PaymentRouter);
-app.use("/dashboard", DashboardRouter);
+app.use("/dashboard", dashboardRoutes);
 app.use("/gemini", GeminiRouter);
 app.use("/status",(req,res)=>{res.send(200)})
 

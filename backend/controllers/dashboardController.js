@@ -2,19 +2,17 @@
 const Book = require("../models/bookModel");
 const Order = require("../models/orderModel");
 const Review = require("../models/reviewModel");
+const User = require("../models/userModel"); 
 
+// ---------- AUTHOR STATS (you already had this) ----------
 const getAuthorStats = async (req, res) => {
   try {
-    const authorId = req.user.id; // authMiddleware sets { id, role }
+    const authorId = req.user.id;
 
-    // 1) all books by this author
     const books = await Book.find({ author: authorId }, "_id title");
     const bookIds = books.map((b) => b._id);
-
     const totalBooks = books.length;
 
-    // 2) all PAID orders for this author's books
-    //    (Order schema: { book, buyer, amount, status })
     const paidOrders = await Order.find({
       status: "paid",
       book: { $in: bookIds },
@@ -24,10 +22,9 @@ const getAuthorStats = async (req, res) => {
 
     const totalSales = paidOrders.length;
 
-    // 3) this month revenue
     const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth(), 1); // first of month
-    const end = new Date(now.getFullYear(), now.getMonth() + 1, 1); // first of next month
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
     const thisMonthOrders = paidOrders.filter(
       (o) => o.createdAt >= start && o.createdAt < end
@@ -38,7 +35,6 @@ const getAuthorStats = async (req, res) => {
       0
     );
 
-    // 4) average rating from all reviews for this author's books
     let avgRating = null;
     if (bookIds.length > 0) {
       const reviews = await Review.find(
@@ -54,7 +50,6 @@ const getAuthorStats = async (req, res) => {
       }
     }
 
-    // optional: top 5 recent orders to show in dashboard
     const latestOrders = paidOrders.slice(0, 5).map((o) => ({
       id: o._id,
       bookTitle: o.book?.title || "Untitled",
@@ -77,4 +72,59 @@ const getAuthorStats = async (req, res) => {
   }
 };
 
-module.exports = { getAuthorStats };
+// ---------- ADMIN STATS (NEW) ----------
+const getAdminStats = async (req, res) => {
+  try {
+    // 1) Top-level counts
+    const [totalUsers, totalBooks, paidOrders] = await Promise.all([
+      User.countDocuments({}),
+      Book.countDocuments({}),
+      Order.find({ status: "paid" })
+        .populate("book", "title")
+        .populate("buyer", "name email")
+        .sort({ createdAt: -1 }),
+    ]);
+
+    const totalSales = paidOrders.length;
+    const totalRevenue = paidOrders.reduce(
+      (sum, o) => sum + (o.amount || 0),
+      0
+    );
+
+    // 2) Recent lists (for small tables)
+    const [recentUsers, recentBooks] = await Promise.all([
+      User.find({}, "name email role createdAt")
+        .sort({ createdAt: -1 })
+        .limit(5),
+      Book.find({}, "title author price published createdAt")
+        .populate("author", "name")
+        .sort({ createdAt: -1 })
+        .limit(5),
+    ]);
+
+    const latestOrders = paidOrders.slice(0, 5).map((o) => ({
+      id: o._id,
+      bookTitle: o.book?.title || "Untitled",
+      buyerName: o.buyer?.name || "Unknown",
+      amount: o.amount,
+      createdAt: o.createdAt,
+    }));
+
+    return res.json({
+      totals: {
+        totalUsers,
+        totalBooks,
+        totalSales,
+        totalRevenue,
+      },
+      recentUsers,
+      recentBooks,
+      latestOrders,
+    });
+  } catch (err) {
+    console.error("Admin dashboard error:", err);
+    return res.status(500).json({ message: "Failed to load admin stats" });
+  }
+};
+
+module.exports = { getAuthorStats, getAdminStats };

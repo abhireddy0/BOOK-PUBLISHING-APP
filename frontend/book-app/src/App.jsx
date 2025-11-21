@@ -10,30 +10,29 @@ import MyBooks from "./pages/MyBooks";
 import EditBook from "./pages/EditBook";
 import BookDetail from "./pages/BookDetail";
 import MyPurchases from "./pages/MyPurchases";
-import BooksList from "./pages/BooksList";
-import CreateBook from "./pages/CreateBook"; // ✅ import
-
+import BooksList from  "./pages/BooksList"
+import CreateBook from "./pages/CreateBook";
+import BookReader from "./pages/BookReader"
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminDashboard from "./pages/AdminDashboard"
+import Landing from "./pages/Landing"
 
-// simple placeholder until you build real AdminDashboard
-const AdminDashboard = () => (
-  <div className="w-screen h-screen flex items-center justify-center">
-    <h1 className="text-2xl font-semibold">Admin Dashboard (coming soon)</h1>
-  </div>
-);
+
 
 export default function App() {
   return (
     <Routes>
       {/* Public home -> show all books */}
-      <Route path="/" element={<BooksList />} />
+       <Route path="/" element={<Landing />} />
+      <Route path="/books" element={<BooksList />} />
+      {/* <Route path="/" element={<BooksList />} /> */}
 
       {/* Auth pages */}
       <Route path="/signup" element={<Signup />} />
       <Route path="/login" element={<Login />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
 
-      {/* Public book detail page (but buying needs login) */}
+      {/* Public book detail page */}
       <Route path="/books/:id" element={<BookDetail />} />
 
       {/* Create new book – author only */}
@@ -56,7 +55,7 @@ export default function App() {
         }
       />
 
-      {/* Author-only dashboard */}
+      {/* Author dashboard */}
       <Route
         path="/dashboard/author"
         element={
@@ -66,7 +65,7 @@ export default function App() {
         }
       />
 
-      {/* Admin-only dashboard */}
+      {/* Admin dashboard */}
       <Route
         path="/dashboard/admin"
         element={
@@ -76,7 +75,7 @@ export default function App() {
         }
       />
 
-      {/* Author my-books */}
+      {/* My books */}
       <Route
         path="/my-books"
         element={
@@ -85,14 +84,16 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+
       <Route
-  path="/books/new"
-  element={
-    <ProtectedRoute allowedRoles={["author"]}>
-      <CreateBook />
-    </ProtectedRoute>
-  }
-/>
+    path="/books/:id/read"
+    element={
+      <ProtectedRoute>
+        <BookReader />
+      </ProtectedRoute>
+    }
+  />
+
 
       {/* My purchases / library */}
       <Route
@@ -104,7 +105,9 @@ export default function App() {
         }
       />
 
-      {/* fallback if route not found */}
+      
+
+      {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

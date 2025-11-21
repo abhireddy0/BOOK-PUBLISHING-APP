@@ -31,6 +31,15 @@ export const updateBookApi = async (bookId, payload, token) => {
   return res.data; // { message, book }
 };
 
+export const getReadableBookApi = async (bookId, token) => {
+  const res = await axios.get(`${serverUrl}/books/${bookId}/read`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return res.data; // { canRead, reason, book }
+};
+
 // 👉 DELETE
 export const deleteBookApi = async (bookId, token) => {
   const res = await axios.delete(`${serverUrl}/books/${bookId}`, authHeaders(token));

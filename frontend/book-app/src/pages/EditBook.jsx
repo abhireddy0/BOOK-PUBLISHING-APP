@@ -4,6 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { ClipLoader } from "react-spinners";
+import { FiUploadCloud, FiImage, FiFileText, FiBookOpen } from "react-icons/fi";
 
 import {
   getBookByIdApi,
@@ -30,6 +31,8 @@ export default function EditBook() {
   const [bookFile, setBookFile] = useState(null);
 
   const [currentBook, setCurrentBook] = useState(null);
+  const [coverPreview, setCoverPreview] = useState(null);
+  const [bookInfo, setBookInfo] = useState(null);
 
   const finalToken = token || localStorage.getItem("token");
 
@@ -47,6 +50,17 @@ export default function EditBook() {
         setDescription(book.description || "");
         setPrice(book.price ?? "");
         setPublishNow(book.published || false);
+        setCoverPreview(book.coverImage || null);
+
+        if (book.fileUrl) {
+          try {
+            const urlParts = book.fileUrl.split("/");
+            const lastSegment = urlParts[urlParts.length - 1];
+            setBookInfo({ name: lastSegment, size: null });
+          } catch {
+            setBookInfo({ name: "Existing file attached", size: null });
+          }
+        }
       } catch (err) {
         console.error(err);
         toast.error(
@@ -108,7 +122,7 @@ export default function EditBook() {
 
   if (loading) {
     return (
-      <div className="w-screen h-screen flex items-center justify-center">
+      <div className="w-screen h-screen flex items-center justify-center bg-slate-950">
         <ClipLoader size={40} />
       </div>
     );
@@ -116,135 +130,308 @@ export default function EditBook() {
 
   if (!currentBook) {
     return (
-      <div className="w-screen h-screen flex items-center justify-center">
-        <p className="text-sm text-slate-500">Book not found.</p>
+      <div className="w-screen h-screen flex flex-col items-center justify-center bg-slate-950 text-slate-100 gap-3">
+        <p className="text-sm text-slate-300">Book not found.</p>
+        <button
+          onClick={() => nav("/my-books")}
+          className="px-4 h-9 rounded-lg bg-slate-100 text-slate-900 text-sm"
+        >
+          Back to My Books
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-8">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-3xl bg-white rounded-2xl shadow-lg p-6 md:p-8 flex flex-col gap-4"
-      >
-        <div className="flex justify-between items-center mb-2">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center px-4 py-10">
+      {/* background glow */}
+      <div className="pointer-events-none fixed inset-0 opacity-40">
+        <div className="absolute -right-32 -top-32 h-72 w-72 rounded-full bg-sky-500/40 blur-3xl" />
+        <div className="absolute -left-24 bottom-0 h-80 w-80 rounded-full bg-purple-500/30 blur-3xl" />
+      </div>
+
+      <div className="relative w-full max-w-5xl">
+        <div className="mb-4 flex items-center justify-between text-slate-200">
           <div>
-            <h1 className="text-2xl font-semibold text-slate-900">
-              Edit book
+            <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">
+              Author Studio
+            </p>
+            <h1 className="text-2xl md:text-3xl font-semibold">
+              Edit “{currentBook.title || "Untitled"}”
             </h1>
-            <p className="text-xs text-slate-500">
-              Update your book details, files, and publish status.
+            <p className="text-xs md:text-sm text-slate-400 mt-1">
+              Update your book details, cover, files, and publish status.
             </p>
           </div>
+
           <button
             type="button"
             onClick={() => nav("/my-books")}
-            className="text-xs underline text-slate-500 hover:text-slate-800"
+            className="text-xs md:text-sm px-3 py-1.5 rounded-lg border border-slate-600 text-slate-200 hover:bg-slate-800"
           >
-            Back to My Books
+            ← Back to My Books
           </button>
         </div>
 
-        {/* Title */}
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-slate-700">
-            Title <span className="text-red-500">*</span>
-          </label>
-          <input
-            className="h-10 rounded-lg border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900/60"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-        </div>
+        {/* main card */}
+        <div className="grid gap-6 md:grid-cols-[1.4fr_1fr] bg-slate-900/70 border border-slate-800 rounded-2xl shadow-[0_22px_60px_rgba(15,23,42,0.9)] backdrop-blur p-5 md:p-7">
+          {/* LEFT – form */}
+          <form
+            onSubmit={handleSubmit}
+            className="flex flex-col gap-4 border-r border-slate-800/70 pr-0 md:pr-6"
+          >
+            <div className="flex items-center gap-2 text-[11px] text-slate-400 mb-1">
+              <span className="h-5 px-2 rounded-full bg-slate-800 text-[10px] inline-flex items-center justify-center">
+                Edit mode
+              </span>
+              <span>Changes go live after you click “Save changes”.</span>
+            </div>
 
-        {/* Description */}
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-slate-700">
-            Description <span className="text-red-500">*</span>
-          </label>
-          <textarea
-            className="min-h-[80px] rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/60 resize-y"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </div>
-
-        {/* Price + Publish */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-slate-700">
-              Price (₹)
-            </label>
-            <input
-              type="number"
-              min="0"
-              className="h-10 rounded-lg border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900/60"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-            />
-          </div>
-
-          <div className="flex flex-col justify-center">
-            <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+            {/* Title */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-slate-200">
+                Title <span className="text-red-400">*</span>
+              </label>
               <input
-                type="checkbox"
-                checked={publishNow}
-                onChange={(e) => setPublishNow(e.target.checked)}
-                className="rounded border-slate-300"
+                className="h-10 rounded-lg border border-slate-700/80 bg-slate-950/80 px-3 text-sm outline-none focus:ring-2 focus:ring-sky-500/70 focus:border-sky-500/60 text-slate-100 placeholder:text-slate-500"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
               />
-              Published
-            </label>
-            <p className="text-[11px] text-slate-400 mt-1">
-              Uncheck to move this book back to draft.
-            </p>
+            </div>
+
+            {/* Description */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-slate-200">
+                Short description <span className="text-red-400">*</span>
+              </label>
+              <textarea
+                className="min-h-[90px] rounded-lg border border-slate-700/80 bg-slate-950/80 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sky-500/70 focus:border-sky-500/60 text-slate-100 placeholder:text-slate-500 resize-y"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+
+            {/* Price + Publish */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-slate-200">
+                  Price (₹)
+                </label>
+                <div className="flex items-center rounded-lg border border-slate-700/80 bg-slate-950/80 px-3">
+                  <span className="text-xs text-slate-400 mr-1.5">₹</span>
+                  <input
+                    type="number"
+                    min="0"
+                    className="h-9 flex-1 bg-transparent text-sm outline-none text-slate-100 placeholder:text-slate-500"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                  />
+                </div>
+                <p className="text-[10px] text-slate-500 mt-0.5">
+                  Set to 0 if you want to make this book free.
+                </p>
+              </div>
+
+              <div className="flex flex-col justify-center gap-1">
+                <label className="inline-flex items-center gap-2 text-xs text-slate-200">
+                  <input
+                    type="checkbox"
+                    checked={publishNow}
+                    onChange={(e) => setPublishNow(e.target.checked)}
+                    className="h-4 w-4 rounded border-slate-500 bg-slate-900 text-sky-500"
+                  />
+                  Published
+                </label>
+                <p className="text-[10px] text-slate-500">
+                  Uncheck to move this book back to draft (hidden from store).
+                </p>
+              </div>
+            </div>
+
+            {/* Files */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-1">
+              {/* Cover replace */}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-slate-200 flex items-center gap-1">
+                  <FiImage className="text-slate-400" />
+                  Replace cover image
+                </label>
+                <label className="min-h-[120px] border border-dashed border-slate-600 rounded-xl p-4 cursor-pointer hover:border-sky-500/70 hover:bg-slate-900/80 transition flex items-center gap-4 bg-slate-950/60">
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm font-medium text-slate-100">
+                      {coverFile ? "New cover selected" : "Click to upload"}
+                    </p>
+                    <p className="text-[11px] text-slate-500">
+                      Leave empty to keep the current cover.
+                    </p>
+                    <p className="text-[11px] text-slate-500 line-clamp-1">
+                      {coverFile
+                        ? coverFile.name
+                        : currentBook.coverImage
+                        ? "Existing cover in use"
+                        : "No cover yet"}
+                    </p>
+                  </div>
+
+                  <div className="w-16 h-20 rounded-lg bg-slate-800/80 border border-slate-700 flex items-center justify-center text-[10px] text-slate-400 overflow-hidden">
+                    {coverPreview ? (
+                      <img
+                        src={coverPreview}
+                        alt="Cover preview"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <FiUploadCloud className="text-lg" />
+                    )}
+                  </div>
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null;
+                      setCoverFile(file);
+                      if (file) {
+                        const url = URL.createObjectURL(file);
+                        setCoverPreview(url);
+                      } else {
+                        setCoverFile(null);
+                        setCoverPreview(currentBook.coverImage || null);
+                      }
+                    }}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+
+              {/* File replace */}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-slate-200 flex items-center gap-1">
+                  <FiFileText className="text-slate-400" />
+                  Replace book file
+                </label>
+                <label className="min-h-[120px] border border-dashed border-slate-600 rounded-xl p-4 cursor-pointer hover:border-sky-500/70 hover:bg-slate-900/80 transition flex items-center justify-between bg-slate-950/60">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-slate-100">
+                      {bookFile ? "New file selected" : "Click to upload file"}
+                    </p>
+                    <p className="text-[11px] text-slate-500">
+                      Leave empty to keep existing file.
+                    </p>
+                    <p className="text-[11px] text-slate-500 line-clamp-2 max-w-[220px]">
+                      {bookFile
+                        ? `${bookFile.name}`
+                        : bookInfo
+                        ? bookInfo.name
+                        : "No file attached yet"}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-center h-10 w-10 rounded-full bg-slate-800/80 border border-slate-700">
+                    <FiUploadCloud className="text-lg text-slate-200" />
+                  </div>
+
+                  <input
+                    type="file"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null;
+                      setBookFile(file);
+                      if (file) {
+                        setBookInfo({ name: file.name, size: file.size });
+                      } else {
+                        setBookFile(null);
+                        if (currentBook.fileUrl) {
+                          try {
+                            const urlParts = currentBook.fileUrl.split("/");
+                            const lastSegment = urlParts[urlParts.length - 1];
+                            setBookInfo({ name: lastSegment, size: null });
+                          } catch {
+                            setBookInfo({
+                              name: "Existing file attached",
+                              size: null,
+                            });
+                          }
+                        } else {
+                          setBookInfo(null);
+                        }
+                      }
+                    }}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            </div>
+
+            {/* Submit */}
+            <div className="flex justify-end pt-3">
+              <button
+                type="submit"
+                disabled={saving}
+                className="h-10 px-6 rounded-xl bg-emerald-500 text-slate-950 text-sm font-semibold flex items-center gap-2 hover:bg-emerald-400 disabled:opacity-60 shadow-lg shadow-emerald-500/30"
+              >
+                {saving && <ClipLoader size={16} color="#020617" />}
+                {saving ? "Saving..." : "Save changes"}
+              </button>
+            </div>
+          </form>
+
+          {/* RIGHT – live preview */}
+          <div className="flex flex-col gap-4">
+            <div className="text-[11px] uppercase tracking-[0.2em] text-slate-500">
+              Live preview
+            </div>
+
+            <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4 flex flex-col gap-4 shadow-inner">
+              <div className="flex gap-4">
+                {/* book cover preview */}
+                <div className="w-28 h-40 rounded-xl bg-gradient-to-br from-sky-500/30 via-purple-500/20 to-emerald-400/30 border border-slate-700 overflow-hidden flex items-center justify-center">
+                  {coverPreview ? (
+                    <img
+                      src={coverPreview}
+                      alt="Preview cover"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 text-slate-200 text-xs px-3">
+                      <FiBookOpen className="text-xl" />
+                      <span>Cover preview</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex-1 flex flex-col gap-1">
+                  <p className="inline-flex items-center px-2 py-0.5 rounded-full bg-sky-500/10 border border-sky-500/30 text-[10px] font-medium text-sky-200 w-fit">
+                    Store preview
+                  </p>
+                  <h2 className="mt-1 text-base md:text-lg font-semibold text-slate-50 line-clamp-2">
+                    {title || "Book title will appear here"}
+                  </h2>
+                  <p className="text-[11px] text-slate-400 line-clamp-3 mt-1">
+                    {description ||
+                      "Update your short description and see how it looks to readers on the store page."}
+                  </p>
+                  <p className="mt-2 text-sm font-semibold text-slate-100">
+                    {price ? `₹${price}` : "₹0 · Free"}
+                  </p>
+                  <p className="text-[10px] text-slate-500 mt-1">
+                    {publishNow
+                      ? "Status: Published (visible in store)."
+                      : "Status: Draft (hidden from store)."}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-2 rounded-xl border border-slate-800 bg-slate-900/80 px-3 py-2 text-[11px] text-slate-400">
+                <p>💡 Changes to price, description, files, and cover are live once you save.</p>
+                <p className="mt-1">
+                  ✅ You can always toggle publish / draft from{" "}
+                  <span className="text-slate-200 font-medium">My Books</span>.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
-
-        {/* Files */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-slate-700">
-              Replace cover image
-            </label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setCoverFile(e.target.files?.[0] || null)}
-              className="text-xs"
-            />
-            <span className="text-[11px] text-slate-400">
-              Leave empty to keep existing cover.
-            </span>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-slate-700">
-              Replace book file
-            </label>
-            <input
-              type="file"
-              onChange={(e) => setBookFile(e.target.files?.[0] || null)}
-              className="text-xs"
-            />
-            <span className="text-[11px] text-slate-400">
-              Leave empty to keep existing file.
-            </span>
-          </div>
-        </div>
-
-        {/* Submit */}
-        <div className="flex justify-end mt-4">
-          <button
-            type="submit"
-            disabled={saving}
-            className="h-10 px-6 rounded-xl bg-slate-900 text-white text-sm flex items-center gap-2 hover:bg-slate-800 disabled:opacity-60"
-          >
-            {saving && <ClipLoader size={16} color="#fff" />}
-            {saving ? "Saving..." : "Save changes"}
-          </button>
-        </div>
-      </form>
+      </div>
     </div>
   );
 }

@@ -5,21 +5,19 @@ import { serverUrl } from "../config/server";
 import { useNavigate } from "react-router-dom";
 import { ClipLoader } from "react-spinners";
 import { toast } from "react-toastify";
+import { FiSearch } from "react-icons/fi";
 import { useSelector } from "react-redux";
 
-export default function BooksList() {
+function BooksList() {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // UI filters
   const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState("latest"); // latest | priceLow | priceHigh
+  const [sortBy, setSortBy] = useState("latest");
 
   const nav = useNavigate();
-  const { user, token } = useSelector((state) => state.user) || {};
-
-  const finalToken = token || localStorage.getItem("token");
-  const isLoggedIn = !!finalToken;
+  const { user } = useSelector((state) => state.user) || {};
+  const displayName = user?.name || "Reader";
 
   useEffect(() => {
     const fetchBooks = async () => {
@@ -28,7 +26,7 @@ export default function BooksList() {
         setBooks(res.data || []);
       } catch (err) {
         console.error("BooksList error:", err);
-        toast.error(err?.response?.data?.message || "Failed to load books");
+        toast.error("Failed to load books");
       } finally {
         setLoading(false);
       }
@@ -37,181 +35,174 @@ export default function BooksList() {
     fetchBooks();
   }, []);
 
-  const publishedBooks = useMemo(
-    () => books.filter((b) => b.published),
-    [books]
-  );
-
-  // apply search + sort
-  const visibleBooks = useMemo(() => {
-    let list = [...publishedBooks];
+  // Search + Sort
+  const filteredBooks = useMemo(() => {
+    let list = [...books];
 
     if (search.trim()) {
-      const q = search.toLowerCase();
+      const q = search.trim().toLowerCase();
       list = list.filter((b) => {
         const title = b.title?.toLowerCase() || "";
-        const author = b.author?.name?.toLowerCase() || "";
         const desc = b.description?.toLowerCase() || "";
+        const authorName =
+          b.authorName?.toLowerCase() || b.author?.name?.toLowerCase() || "";
         return (
-          title.includes(q) || author.includes(q) || desc.includes(q)
+          title.includes(q) || desc.includes(q) || authorName.includes(q)
         );
       });
     }
 
-    if (sortBy === "priceLow") {
+    if (sortBy === "latest") {
+      list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    } else if (sortBy === "priceLow") {
       list.sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
     } else if (sortBy === "priceHigh") {
       list.sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
-    } else if (sortBy === "latest") {
-      list.sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() -
-          new Date(a.createdAt).getTime()
-      );
     }
 
     return list;
-  }, [publishedBooks, search, sortBy]);
+  }, [books, search, sortBy]);
 
   if (loading) {
     return (
-      <div className="w-screen h-screen flex items-center justify-center bg-slate-950">
+      <div className="w-screen h-screen bg-slate-950 text-white flex items-center justify-center">
         <ClipLoader size={40} />
       </div>
     );
   }
 
-  const displayName = user?.name || "Reader";
-  const userRole = user?.role;
-
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 px-6 py-6">
-      {/* top bar */}
-      <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold">StoryVerse</h1>
-          <p className="text-sm text-slate-400">
-            Discover and buy digital books from independent authors.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3 text-sm">
-          {isLoggedIn ? (
-            <>
-              <span className="text-slate-300 hidden sm:inline">
-                Hi, <span className="font-medium">{displayName}</span>
-              </span>
-
-              {userRole === "author" && (
-                <button
-                  onClick={() => nav("/my-books")}
-                  className="px-3 h-9 rounded-lg bg-slate-800 hover:bg-slate-700"
-                >
-                  My books
-                </button>
-              )}
-
-              <button
-                onClick={() => nav("/purchases")}
-                className="px-3 h-9 rounded-lg border border-slate-600 hover:bg-slate-800"
-              >
-                My library
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={() => nav("/login")}
-                className="px-3 h-9 rounded-lg bg-slate-100 text-slate-900 hover:bg-white"
-              >
-                Login
-              </button>
-              <button
-                onClick={() => nav("/signup")}
-                className="px-3 h-9 rounded-lg border border-slate-400 hover:bg-slate-800"
-              >
-                Sign up
-              </button>
-            </>
-          )}
-        </div>
-      </header>
-
-      {/* controls row */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-5">
-        <div className="flex-1 flex gap-2">
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by title, author, or description..."
-            className="flex-1 h-10 rounded-lg bg-slate-900 border border-slate-700 px-3 text-sm outline-none focus:ring-2 focus:ring-sky-500"
-          />
-        </div>
-
-        <div className="flex items-center gap-2 text-xs md:text-sm">
-          <span className="text-slate-400">Sort by</span>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="h-9 rounded-lg bg-slate-900 border border-slate-700 px-2 text-xs md:text-sm outline-none focus:ring-2 focus:ring-sky-500"
-          >
-            <option value="latest">Latest</option>
-            <option value="priceLow">Price: Low → High</option>
-            <option value="priceHigh">Price: High → Low</option>
-          </select>
-        </div>
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-4 md:px-6 py-8 md:py-10 text-slate-100">
+      {/* Blobs */}
+      <div className="pointer-events-none fixed inset-0 opacity-40">
+        <div className="absolute -right-40 top-0 h-72 w-72 rounded-full bg-purple-600/30 blur-3xl" />
+        <div className="absolute -left-32 bottom-0 h-72 w-72 rounded-full bg-sky-600/30 blur-3xl" />
       </div>
 
-      {/* grid */}
-      {visibleBooks.length === 0 ? (
-        <p className="text-sm text-slate-400">
-          No books match your search. Try a different keyword.
-        </p>
-      ) : (
-        <div className="grid gap-5 md:grid-cols-3 lg:grid-cols-4">
-          {visibleBooks.map((book) => (
-            <button
-              key={book._id}
-              onClick={() => nav(`/books/${book._id}`)}
-              className="text-left rounded-2xl bg-slate-900/60 border border-slate-800 hover:border-sky-500/80 hover:-translate-y-1 transition-all shadow-lg overflow-hidden flex flex-col"
+      <div className="relative max-w-7xl mx-auto space-y-6">
+        {/* Top header */}
+        <header className="flex flex-col gap-2 md:gap-3">
+          <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">
+            Welcome back, {displayName}
+          </p>
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-semibold">StoryVerse</h1>
+              <p className="text-sm md:text-base text-slate-400 mt-1">
+                Discover and buy digital books from independent authors.
+              </p>
+            </div>
+            <div className="text-xs text-slate-400 md:text-right">
+              <p>{filteredBooks.length} books available</p>
+              <p className="text-slate-500">
+                Browse, preview and purchase securely with Razorpay.
+              </p>
+            </div>
+          </div>
+        </header>
+
+        {/* Search + Sort */}
+        <section className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="flex items-center gap-2 bg-slate-900/90 border border-slate-700 px-3 h-11 rounded-xl w-full md:max-w-lg shadow-sm shadow-black/40">
+            <FiSearch className="text-slate-400 text-lg" />
+            <input
+              placeholder="Search by title, author, or description..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="bg-transparent flex-1 outline-none text-sm text-slate-200 placeholder:text-slate-500"
+            />
+          </div>
+
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-slate-400">Sort by</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="h-10 rounded-lg bg-slate-900 border border-slate-700 px-2 outline-none text-slate-200 text-sm"
             >
-              {/* cover */}
-              {book.coverImage ? (
-                <img
-                  src={book.coverImage}
-                  alt={book.title}
-                  className="w-full h-52 object-cover"
-                />
-              ) : (
-                <div className="w-full h-52 bg-slate-800 flex items-center justify-center text-xs text-slate-500">
-                  No cover image
+              <option value="latest">Latest</option>
+              <option value="priceLow">Price: Low to High</option>
+              <option value="priceHigh">Price: High to Low</option>
+            </select>
+          </div>
+        </section>
+
+        {/* Books Grid */}
+        {filteredBooks.length === 0 ? (
+          <div className="mt-16 flex flex-col items-center gap-2">
+            <p className="text-sm text-slate-300">No books found.</p>
+            <p className="text-xs text-slate-500">
+              Try adjusting your search or sort filters.
+            </p>
+          </div>
+        ) : (
+          <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mt-2">
+            {filteredBooks.map((b) => (
+              <article
+                key={b._id}
+                className="rounded-2xl bg-slate-900/85 border border-slate-800 p-4 flex flex-col shadow-[0_16px_40px_rgba(15,23,42,0.85)] hover:border-sky-500/60 hover:shadow-sky-500/20 transition"
+              >
+                {/* Cover */}
+                <div
+                  className="w-full h-48 rounded-xl overflow-hidden bg-slate-800 cursor-pointer relative group"
+                  onClick={() => nav(`/books/${b._id}`)}
+                >
+                  {b.coverImage ? (
+                    <img
+                      src={b.coverImage}
+                      alt={b.title}
+                      className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-1 text-[11px] text-slate-400">
+                      <span className="text-lg">📚</span>
+                      <span>No cover available</span>
+                    </div>
+                  )}
+                  {b.published === false && (
+                    <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-amber-500/80 text-[10px] font-semibold text-slate-900">
+                      Draft
+                    </span>
+                  )}
                 </div>
-              )}
 
-              {/* body */}
-              <div className="p-4 flex flex-col gap-2">
-                <h2 className="text-sm font-semibold line-clamp-2">
-                  {book.title}
-                </h2>
-                <p className="text-xs text-slate-400 line-clamp-1">
-                  by {book.author?.name || "Unknown"}
-                </p>
-                <p className="text-sm font-medium text-sky-300 mt-1">
-                  ₹{book.price ?? 0}
-                </p>
+                {/* Title + Author */}
+                <div className="mt-3 flex flex-col gap-0.5">
+                  <h2 className="font-semibold text-base text-slate-50 line-clamp-1">
+                    {b.title}
+                  </h2>
+                  <span className="text-xs text-slate-400 line-clamp-1">
+                    by {b.authorName || b.author?.name || "Unknown"}
+                  </span>
+                </div>
 
-                <p className="text-[11px] text-slate-500 line-clamp-2 mt-1">
-                  {book.description || "No description provided."}
+                {/* Short description */}
+                <p className="mt-2 text-xs text-slate-400 line-clamp-2 min-h-[32px]">
+                  {b.description || "No description provided yet."}
                 </p>
 
-                <span className="mt-2 inline-flex text-[11px] px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/40 w-max">
-                  Published
-                </span>
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
+                {/* Price + button */}
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <p className="text-sm text-slate-100 font-semibold">
+                    {b.price && Number(b.price) > 0
+                      ? `₹${b.price}`
+                      : "Free"}
+                  </p>
+
+                  <button
+                    onClick={() => nav(`/books/${b._id}`)}
+                    className="flex-1 h-9 rounded-lg bg-sky-500 text-slate-950 font-medium text-xs sm:text-sm hover:bg-sky-400 transition text-center"
+                  >
+                    View &amp; Buy with Razorpay
+                  </button>
+                </div>
+              </article>
+            ))}
+          </section>
+        )}
+      </div>
     </div>
   );
 }
+
+export default BooksList;
