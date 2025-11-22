@@ -1,34 +1,36 @@
-// src/api/books.js
 import axios from "axios";
 import { serverUrl } from "../config/server";
 
-// helper to always attach token
 const authHeaders = (token) => ({
   headers: {
     Authorization: `Bearer ${token}`,
   },
 });
 
-// 👉 CREATE
 export const createBookApi = async (payload, token) => {
-  const res = await axios.post(`${serverUrl}/books`, payload, authHeaders(token));
+  const res = await axios.post(
+    `${serverUrl}/books`,
+    payload,
+    authHeaders(token)
+  );
   return res.data; // { message, book }
 };
 
-// 👉 GET ONE BOOK BY ID
 export const getBookByIdApi = async (bookId, token) => {
-  const res = await axios.get(`${serverUrl}/books/${bookId}`, authHeaders(token));
-  return res.data; // the book document
+  const res = await axios.get(
+    `${serverUrl}/books/${bookId}`,
+    authHeaders(token)
+  );
+  return res.data;
 };
 
-// 👉 UPDATE (title, description, price etc.)
 export const updateBookApi = async (bookId, payload, token) => {
   const res = await axios.patch(
     `${serverUrl}/books/${bookId}`,
     payload,
     authHeaders(token)
   );
-  return res.data; // { message, book }
+  return res.data;
 };
 
 export const getReadableBookApi = async (bookId, token) => {
@@ -37,16 +39,17 @@ export const getReadableBookApi = async (bookId, token) => {
       Authorization: `Bearer ${token}`,
     },
   });
-  return res.data; // { canRead, reason, book }
+  return res.data;
 };
 
-// 👉 DELETE
 export const deleteBookApi = async (bookId, token) => {
-  const res = await axios.delete(`${serverUrl}/books/${bookId}`, authHeaders(token));
-  return res.data; // { message: "Book deleted" }
+  const res = await axios.delete(
+    `${serverUrl}/books/${bookId}`,
+    authHeaders(token)
+  );
+  return res.data;
 };
 
-// 👉 UPLOAD COVER
 export const uploadBookCoverApi = async (bookId, file, token) => {
   const fd = new FormData();
   fd.append("cover", file);
@@ -60,7 +63,6 @@ export const uploadBookCoverApi = async (bookId, file, token) => {
   return res.data;
 };
 
-// 👉 UPLOAD FILE
 export const uploadBookFileApi = async (bookId, file, token) => {
   const fd = new FormData();
   fd.append("file", file);
@@ -74,12 +76,11 @@ export const uploadBookFileApi = async (bookId, file, token) => {
   return res.data;
 };
 
-// 👉 PUBLISH / UNPUBLISH
 export const setPublishApi = async (bookId, published, token) => {
   const res = await axios.patch(
     `${serverUrl}/books/${bookId}/publish`,
     { published },
     authHeaders(token)
   );
-  return res.data; // { message, published, book }
+  return res.data;
 };

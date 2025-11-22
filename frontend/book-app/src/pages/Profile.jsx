@@ -1,4 +1,3 @@
-// src/pages/Profile.jsx
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -33,7 +32,9 @@ export default function Profile() {
   const nav = useNavigate();
 
   const finalToken =
-    token || localStorage.getItem("token") || JSON.parse(localStorage.getItem("storyverse_auth") || "null")?.token;
+    token ||
+    localStorage.getItem("token") ||
+    JSON.parse(localStorage.getItem("storyverse_auth") || "null")?.token;
 
   const [form, setForm] = useState({
     name: "",
@@ -63,12 +64,9 @@ export default function Profile() {
           role: profile.role || "",
         });
 
-        // keep redux in sync (but don't overwrite token)
         dispatch(setUserData({ user: profile, token: finalToken }));
       } catch (err) {
-        showErrorToast(
-          err?.response?.data?.message || "Failed to load profile."
-        );
+        showErrorToast(err?.response?.data?.message || "Failed to load profile.");
       } finally {
         setLoading(false);
       }
@@ -89,29 +87,26 @@ export default function Profile() {
       const payload = {
         name: form.name,
         bio: form.bio,
-        photoUrl: form.photoUrl,
+        photoUrl: form.photoUrl, // will map to avatar on backend
       };
 
       const data = await updateMyProfileApi(payload, finalToken);
+      const updated = data.user;
 
-      // update redux + localStorage auth object (if you use it)
-      dispatch(setUserData({ user: data.user, token: finalToken }));
+      // keep Redux & localStorage in sync
+      dispatch(setUserData({ user: updated, token: finalToken }));
 
-      const stored = JSON.parse(
-        localStorage.getItem("storyverse_auth") || "null"
-      );
+      const stored = JSON.parse(localStorage.getItem("storyverse_auth") || "null");
       if (stored) {
         localStorage.setItem(
           "storyverse_auth",
-          JSON.stringify({ ...stored, user: data.user })
+          JSON.stringify({ ...stored, user: updated })
         );
       }
 
       showSuccessToast("Profile updated successfully ✨");
     } catch (err) {
-      showErrorToast(
-        err?.response?.data?.message || "Failed to update profile."
-      );
+      showErrorToast(err?.response?.data?.message || "Failed to update profile.");
     } finally {
       setSaving(false);
     }
@@ -129,7 +124,6 @@ export default function Profile() {
     <div className="min-h-screen w-full bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-3xl bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 overflow-hidden">
         <div className="grid md:grid-cols-[1.1fr_1fr]">
-          {/* LEFT – form */}
           <div className="px-6 py-7 sm:px-8 sm:py-9">
             <p className="text-xs font-semibold tracking-[0.2em] text-neutral-500 uppercase">
               Your profile
@@ -142,11 +136,8 @@ export default function Profile() {
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Name */}
               <div>
-                <label className="text-xs font-medium text-neutral-700">
-                  Name
-                </label>
+                <label className="text-xs font-medium text-neutral-700">Name</label>
                 <input
                   type="text"
                   name="name"
@@ -156,11 +147,8 @@ export default function Profile() {
                 />
               </div>
 
-              {/* Email (read only) */}
               <div>
-                <label className="text-xs font-medium text-neutral-700">
-                  Email
-                </label>
+                <label className="text-xs font-medium text-neutral-700">Email</label>
                 <input
                   type="email"
                   value={form.email}
@@ -169,11 +157,8 @@ export default function Profile() {
                 />
               </div>
 
-              {/* Role (read only) */}
               <div>
-                <label className="text-xs font-medium text-neutral-700">
-                  Role
-                </label>
+                <label className="text-xs font-medium text-neutral-700">Role</label>
                 <input
                   type="text"
                   value={form.role}
@@ -182,11 +167,8 @@ export default function Profile() {
                 />
               </div>
 
-              {/* Bio */}
               <div>
-                <label className="text-xs font-medium text-neutral-700">
-                  Bio
-                </label>
+                <label className="text-xs font-medium text-neutral-700">Bio</label>
                 <textarea
                   name="bio"
                   rows={3}
@@ -197,11 +179,8 @@ export default function Profile() {
                 />
               </div>
 
-              {/* Photo URL */}
               <div>
-                <label className="text-xs font-medium text-neutral-700">
-                  Photo URL
-                </label>
+                <label className="text-xs font-medium text-neutral-700">Photo URL</label>
                 <input
                   type="text"
                   name="photoUrl"
@@ -211,7 +190,7 @@ export default function Profile() {
                   className="mt-1 h-10 w-full rounded-xl border border-neutral-200 bg-neutral-50/60 px-3 text-sm outline-none focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900/10 transition"
                 />
                 <p className="mt-1 text-[11px] text-neutral-500">
-                  Later we can integrate direct uploads with Cloudinary.
+                  (Optional) You can paste an image URL now. Direct upload button coming later.
                 </p>
               </div>
 
@@ -226,36 +205,25 @@ export default function Profile() {
             </form>
           </div>
 
-          {/* RIGHT – preview */}
           <div className="relative bg-black text-white">
             <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-slate-900/90 to-slate-950" />
             <div className="relative z-10 h-full w-full flex flex-col items-center justify-center p-6 gap-4">
               <div className="h-20 w-20 rounded-full border border-white/30 bg-white/10 overflow-hidden flex items-center justify-center text-2xl font-semibold">
                 {form.photoUrl ? (
-                  <img
-                    src={form.photoUrl}
-                    alt={form.name}
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={form.photoUrl} alt={form.name} className="w-full h-full object-cover" />
                 ) : (
                   (form.name || "SV").slice(0, 2).toUpperCase()
                 )}
               </div>
               <div className="text-center space-y-1">
-                <p className="text-lg font-semibold">
-                  {form.name || "Your name"}
-                </p>
+                <p className="text-lg font-semibold">{form.name || "Your name"}</p>
                 <p className="text-sm text-white/70">
                   {form.bio || "This is how readers will see you as an author."}
                 </p>
               </div>
               <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-white/80">
-                <span className="px-3 py-1 rounded-full bg-white/10 border border-white/20">
-                  ✍️ Author profile
-                </span>
-                <span className="px-3 py-1 rounded-full bg-white/10 border border-white/20">
-                  📚 Shown on your books
-                </span>
+                <span className="px-3 py-1 rounded-full bg-white/10 border border-white/20">✍️ Author profile</span>
+                <span className="px-3 py-1 rounded-full bg-white/10 border border-white/20">📚 Shown on your books</span>
               </div>
             </div>
           </div>

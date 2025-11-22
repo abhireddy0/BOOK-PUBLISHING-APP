@@ -1,4 +1,4 @@
-// src/pages/Login.jsx
+
 import React, { useState } from "react";
 import { IoEyeOutline, IoEye } from "react-icons/io5";
 import { useNavigate, Link } from "react-router-dom";
@@ -46,19 +46,21 @@ export default function Login() {
     try {
       setLoading(true);
 
-      const data = await login({ email, password }); // { token, user }
-
+      const data = await login({ email, password }); 
       dispatch(setUserData(data));
       localStorage.setItem("token", data.token);
-      localStorage.setItem("storyverse_auth", JSON.stringify(data));
+      localStorage.setItem(
+        "storyverse_auth",
+        JSON.stringify({ token: data.token, user: data.user })
+      );
 
       showSuccessToast("Logged in successfully ✨");
 
-      // ⭐ UPDATED ROLE LOGIC ⭐
+      
       if (data.user.role === "admin") {
         nav("/dashboard/admin");
       } else {
-        // authors + readers → landing page
+        
         nav("/");
       }
     } catch (err) {
@@ -72,11 +74,13 @@ export default function Login() {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-neutral-900 via-neutral-950 to-neutral-800 flex items-center justify-center px-4 py-6">
-      <div className="w-full max-w-5xl bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-white/40">
-        <div className="grid lg:grid-cols-2">
-          {/* LEFT - FORM */}
-          <div className="px-6 py-8 sm:px-10 sm:py-10 flex items-center">
-            <form onSubmit={handleLogin} className="w-full space-y-4">
+     
+      <div className="w-full max-w-5xl bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-white/40 lg:max-h-[88vh]">
+     
+        <div className="grid lg:grid-cols-2 lg:h-[82vh]">
+        
+          <div className="px-6 py-8 sm:px-10 sm:py-10 flex items-stretch">
+            <form onSubmit={handleLogin} className="w-full space-y-4 overflow-y-auto pr-1">
               <div>
                 <p className="text-xs font-semibold tracking-[0.2em] text-neutral-500 uppercase">
                   Welcome back
@@ -90,7 +94,6 @@ export default function Login() {
                 </p>
               </div>
 
-              {/* Email */}
               <div className="pt-2">
                 <label className="text-xs font-medium text-neutral-700">
                   Email
@@ -104,7 +107,7 @@ export default function Login() {
                 />
               </div>
 
-              {/* Password */}
+             
               <div>
                 <label className="text-xs font-medium text-neutral-700">
                   Password
@@ -127,7 +130,7 @@ export default function Login() {
                 </div>
               </div>
 
-              {/* Forgot password */}
+             
               <div className="flex justify-end mt-1">
                 <button
                   type="button"
@@ -138,7 +141,7 @@ export default function Login() {
                 </button>
               </div>
 
-              {/* Login button */}
+            
               <button
                 type="submit"
                 disabled={loading}
@@ -160,7 +163,7 @@ export default function Login() {
             </form>
           </div>
 
-          {/* RIGHT - VISUAL */}
+         
           <div className="relative h-[220px] lg:h-full bg-black text-white">
             <img
               src={cover}
@@ -198,7 +201,7 @@ export default function Login() {
                 <p>“Every login is a new chapter.”</p>
                 <p>StoryVerse · 2025</p>
               </div>
-              yes
+            
             </div>
           </div>
         </div>

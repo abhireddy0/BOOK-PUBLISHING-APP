@@ -4,13 +4,19 @@ const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
 
-    email: { type: String, required: true, trim: true, lowercase: true, unique: true },
+    email: {
+      type: String,
+      required: true,
+      trim: true,
+      lowercase: true,
+      unique: true,
+    },
 
-    password: { type: String, required: true, minlength: 6 },
+    password: { type: String, required: true, minlength: 6, select: false },
 
     role: { type: String, enum: ["reader", "author", "admin"], default: "reader" },
 
-    avatar: { type: String, default: null },
+    avatar: { type: String, default: "" },
 
     bio: { type: String, trim: true, maxlength: 300, default: "" },
 
@@ -18,10 +24,9 @@ const userSchema = new mongoose.Schema(
 
     otpExpires: { type: Date, default: null },
 
-    isOtpVerified: { type: Boolean, default: false }
+    isOtpVerified: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
 
-const User = mongoose.model("User", userSchema);
-module.exports = User;
+module.exports = mongoose.model("User", userSchema);

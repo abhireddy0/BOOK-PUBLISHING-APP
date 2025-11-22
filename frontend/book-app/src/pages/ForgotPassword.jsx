@@ -1,4 +1,4 @@
-// src/pages/ForgotPassword.jsx
+
 import React, { useState } from "react";
 import axios from "axios";
 import { serverUrl } from "../config/server";
@@ -8,10 +8,10 @@ import {
   FiMail,
   FiKey,
   FiCheckCircle,
-  FiAlertCircle, // ✅ added for error toast
+  FiAlertCircle, 
 } from "react-icons/fi";
 
-// ✅ Reusable toast helpers (same style as Login/Signup)
+
 const showErrorToast = (message) =>
   toast.error(
     <div className="flex items-start gap-3">
@@ -117,7 +117,7 @@ export default function ForgotPassword() {
     <div className="min-h-screen w-full bg-gradient-to-br from-neutral-900 via-neutral-950 to-neutral-800 flex items-center justify-center px-4 py-6">
       <div className="w-full max-w-5xl bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/40 overflow-hidden">
         <div className="grid md:grid-cols-[1.1fr_0.9fr] gap-0 items-stretch">
-          {/* Left: Info / Branding */}
+       
           <div className="hidden md:flex flex-col justify-between bg-neutral-950 text-slate-50 p-7 border-r border-white/10">
             <div>
               <div className="flex items-center justify-between mb-5">
@@ -192,9 +192,9 @@ export default function ForgotPassword() {
             </p>
           </div>
 
-          {/* Right: Form */}
+ 
           <form className="w-full bg-neutral-950/95 text-slate-50 border-l md:border-l-0 border-neutral-900 shadow-[0_20px_60px_rgba(15,23,42,0.9)] rounded-3xl md:rounded-none p-6 md:p-7 flex flex-col gap-5">
-            {/* Header + Step indicator */}
+    
             <div className="flex items-center justify-between mb-1">
               <div>
                 <p className="text-[11px] text-slate-400 uppercase tracking-[0.16em] mb-1">
@@ -241,7 +241,7 @@ export default function ForgotPassword() {
               ))}
             </div>
 
-            {/* Email (always shown, editable only in step 1) */}
+        
             <div className="flex flex-col gap-1 mt-3">
               <label className="text-xs font-medium text-slate-200">
                 Registered email
@@ -259,7 +259,7 @@ export default function ForgotPassword() {
               </p>
             </div>
 
-            {/* Step 1 actions */}
+         
             {step === 1 && (
               <button
                 onClick={handleStep1}
@@ -270,7 +270,7 @@ export default function ForgotPassword() {
               </button>
             )}
 
-            {/* Step 2 UI */}
+         
             {step === 2 && (
               <>
                 <div className="flex flex-col gap-1 mt-2">
@@ -309,7 +309,7 @@ export default function ForgotPassword() {
               </>
             )}
 
-            {/* Step 3 UI */}
+           
             {step === 3 && (
               <>
                 <div className="flex flex-col gap-1 mt-2">

@@ -1,8 +1,6 @@
-// src/App.jsx
 import React from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 
-// Pages
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -18,7 +16,6 @@ import AdminDashboard from "./pages/AdminDashboard";
 import Landing from "./pages/Landing";
 import Profile from "./pages/Profile"; // 👈 NEW
 
-// Components
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 import ChatBot from "./components/ChatBot";
@@ -26,7 +23,6 @@ import ChatBot from "./components/ChatBot";
 function AppInner() {
   const location = useLocation();
 
-  // Hide Navbar on authentication pages
   const hideNavRoutes = ["/login", "/signup", "/forgot-password"];
   const showNavbar = !hideNavRoutes.includes(location.pathname);
 
@@ -34,20 +30,16 @@ function AppInner() {
     <>
       {showNavbar && <Navbar />}
 
-      {/* Adds spacing because Navbar is fixed */}
       <div className={showNavbar ? "pt-14" : ""}>
         <Routes>
-          {/* Public pages */}
           <Route path="/" element={<Landing />} />
           <Route path="/books" element={<BooksList />} />
           <Route path="/books/:id" element={<BookDetail />} />
 
-          {/* Auth pages */}
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
 
-          {/* Reader / Author / Admin pages */}
           <Route
             path="/purchases"
             element={
@@ -57,7 +49,6 @@ function AppInner() {
             }
           />
 
-          {/* Profile page (all roles allowed) */}
           <Route
             path="/profile"
             element={
@@ -67,7 +58,6 @@ function AppInner() {
             }
           />
 
-          {/* Author-only pages */}
           <Route
             path="/dashboard/author"
             element={
@@ -101,7 +91,6 @@ function AppInner() {
             }
           />
 
-          {/* Book reader (any logged-in user) */}
           <Route
             path="/books/:id/read"
             element={
@@ -111,7 +100,6 @@ function AppInner() {
             }
           />
 
-          {/* Admin-only */}
           <Route
             path="/dashboard/admin"
             element={
@@ -121,12 +109,10 @@ function AppInner() {
             }
           />
 
-          {/* Not found → redirect */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
 
-      {/* Floating AI bot */}
       <ChatBot />
     </>
   );

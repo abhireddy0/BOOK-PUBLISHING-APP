@@ -1,4 +1,4 @@
-// src/pages/Landing.jsx
+
 import React, { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -43,18 +43,18 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-50 relative overflow-hidden">
-      {/* Background blobs */}
+      
       <div className="pointer-events-none fixed inset-0 opacity-50">
         <div className="absolute -right-40 -top-20 h-72 w-72 rounded-full bg-sky-500/35 blur-3xl" />
         <div className="absolute -left-32 bottom-0 h-80 w-80 rounded-full bg-purple-500/30 blur-3xl" />
       </div>
 
-      {/* MAIN CONTENT */}
+   
       <main className="relative z-10">
-        {/* HERO SECTION */}
+   
         <section className="max-w-7xl mx-auto px-4 pt-10 pb-12 md:pt-14 md:pb-16">
           <div className="grid gap-10 lg:grid-cols-[1.5fr_1.2fr] items-center">
-            {/* LEFT SIDE */}
+     
             <motion.div
               ref={heroRef}
               initial={{ opacity: 0, y: 40 }}
@@ -80,7 +80,7 @@ export default function Landing() {
                 Razorpay payments.
               </p>
 
-              {/* CTA BUTTONS */}
+        
               <div className="flex flex-wrap gap-3 pt-2">
                 <button
                   onClick={() => nav("/books")}
@@ -101,7 +101,6 @@ export default function Landing() {
               </div>
             </motion.div>
 
-            {/* RIGHT SIDE – placeholder / animation */}
             <motion.div
               ref={floatRef}
               initial={{ opacity: 0, x: 40 }}
@@ -111,12 +110,12 @@ export default function Landing() {
             >
               <div className="absolute -top-10 -right-8 h-32 w-32 rounded-full bg-sky-500/30 blur-3xl" />
               <div className="absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-purple-500/30 blur-3xl" />
-              {/* You can add your mockup / preview card here */}
+         
             </motion.div>
           </div>
         </section>
 
-        {/* FEATURES SECTION */}
+      
         <section id="sv-features" className="max-w-7xl mx-auto px-4 pb-16">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-6">
             <div>

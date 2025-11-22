@@ -1,4 +1,3 @@
-// src/pages/ExploreBooks.jsx
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { ClipLoader } from "react-spinners";
@@ -16,7 +15,7 @@ export default function ExploreBooks() {
       try {
         const res = await axios.get(`${serverUrl}/books`);
         const all = res.data || [];
-        const published = all.filter((b) => b.published); // show only published
+        const published = all.filter((b) => b.published);
         setBooks(published);
       } catch (err) {
         console.error(err);

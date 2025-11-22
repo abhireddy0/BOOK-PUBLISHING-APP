@@ -1,4 +1,3 @@
-// src/pages/MyPurchases.jsx
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useSelector } from "react-redux";
@@ -32,9 +31,7 @@ export default function MyPurchases() {
         setOrders(res.data?.orders || []);
       } catch (err) {
         console.error("MyPurchases error:", err);
-        toast.error(
-          err?.response?.data?.message || "Failed to load purchases"
-        );
+        toast.error(err?.response?.data?.message || "Failed to load purchases");
       } finally {
         setLoading(false);
       }
@@ -54,9 +51,7 @@ export default function MyPurchases() {
   return (
     <div className="min-h-screen bg-slate-50 px-6 py-6">
       <header className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-semibold text-slate-900">
-          My Library
-        </h1>
+        <h1 className="text-2xl font-semibold text-slate-900">My Library</h1>
       </header>
 
       {orders.length === 0 ? (

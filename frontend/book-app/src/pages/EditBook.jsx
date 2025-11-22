@@ -15,7 +15,7 @@ import {
 } from "../api/books";
 
 export default function EditBook() {
-  const { id } = useParams(); // bookId from URL
+  const { id } = useParams();
   const { token } = useSelector((state) => state.user) || {};
   const nav = useNavigate();
 
@@ -72,7 +72,6 @@ export default function EditBook() {
     };
 
     loadBook();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const handleSubmit = async (e) => {
@@ -84,7 +83,6 @@ export default function EditBook() {
     try {
       setSaving(true);
 
-      // 1) Update fields
       const payload = {
         title: title.trim(),
         description: description.trim(),
@@ -93,17 +91,14 @@ export default function EditBook() {
 
       await updateBookApi(id, payload, finalToken);
 
-      // 2) Upload new cover if selected
       if (coverFile) {
         await uploadBookCoverApi(id, coverFile, finalToken);
       }
 
-      // 3) Upload new file if selected
       if (bookFile) {
         await uploadBookFileApi(id, bookFile, finalToken);
       }
 
-      // 4) Publish/unpublish
       if (publishNow !== currentBook.published) {
         await setPublishApi(id, publishNow, finalToken);
       }
@@ -112,9 +107,7 @@ export default function EditBook() {
       nav("/my-books");
     } catch (err) {
       console.error(err);
-      toast.error(
-        err?.response?.data?.message || "Failed to update book"
-      );
+      toast.error(err?.response?.data?.message || "Failed to update book");
     } finally {
       setSaving(false);
     }
@@ -144,7 +137,6 @@ export default function EditBook() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center px-4 py-10">
-      {/* background glow */}
       <div className="pointer-events-none fixed inset-0 opacity-40">
         <div className="absolute -right-32 -top-32 h-72 w-72 rounded-full bg-sky-500/40 blur-3xl" />
         <div className="absolute -left-24 bottom-0 h-80 w-80 rounded-full bg-purple-500/30 blur-3xl" />
@@ -173,9 +165,7 @@ export default function EditBook() {
           </button>
         </div>
 
-        {/* main card */}
         <div className="grid gap-6 md:grid-cols-[1.4fr_1fr] bg-slate-900/70 border border-slate-800 rounded-2xl shadow-[0_22px_60px_rgba(15,23,42,0.9)] backdrop-blur p-5 md:p-7">
-          {/* LEFT – form */}
           <form
             onSubmit={handleSubmit}
             className="flex flex-col gap-4 border-r border-slate-800/70 pr-0 md:pr-6"
@@ -187,7 +177,6 @@ export default function EditBook() {
               <span>Changes go live after you click “Save changes”.</span>
             </div>
 
-            {/* Title */}
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium text-slate-200">
                 Title <span className="text-red-400">*</span>
@@ -199,7 +188,6 @@ export default function EditBook() {
               />
             </div>
 
-            {/* Description */}
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium text-slate-200">
                 Short description <span className="text-red-400">*</span>
@@ -211,7 +199,6 @@ export default function EditBook() {
               />
             </div>
 
-            {/* Price + Publish */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-slate-200">
@@ -248,9 +235,7 @@ export default function EditBook() {
               </div>
             </div>
 
-            {/* Files */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-1">
-              {/* Cover replace */}
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-slate-200 flex items-center gap-1">
                   <FiImage className="text-slate-400" />
@@ -304,7 +289,6 @@ export default function EditBook() {
                 </label>
               </div>
 
-              {/* File replace */}
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-slate-200 flex items-center gap-1">
                   <FiFileText className="text-slate-400" />
@@ -362,7 +346,6 @@ export default function EditBook() {
               </div>
             </div>
 
-            {/* Submit */}
             <div className="flex justify-end pt-3">
               <button
                 type="submit"
@@ -375,7 +358,6 @@ export default function EditBook() {
             </div>
           </form>
 
-          {/* RIGHT – live preview */}
           <div className="flex flex-col gap-4">
             <div className="text-[11px] uppercase tracking-[0.2em] text-slate-500">
               Live preview
@@ -383,7 +365,6 @@ export default function EditBook() {
 
             <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4 flex flex-col gap-4 shadow-inner">
               <div className="flex gap-4">
-                {/* book cover preview */}
                 <div className="w-28 h-40 rounded-xl bg-gradient-to-br from-sky-500/30 via-purple-500/20 to-emerald-400/30 border border-slate-700 overflow-hidden flex items-center justify-center">
                   {coverPreview ? (
                     <img
@@ -422,7 +403,10 @@ export default function EditBook() {
               </div>
 
               <div className="mt-2 rounded-xl border border-slate-800 bg-slate-900/80 px-3 py-2 text-[11px] text-slate-400">
-                <p>💡 Changes to price, description, files, and cover are live once you save.</p>
+                <p>
+                  💡 Changes to price, description, files, and cover are live
+                  once you save.
+                </p>
                 <p className="mt-1">
                   ✅ You can always toggle publish / draft from{" "}
                   <span className="text-slate-200 font-medium">My Books</span>.

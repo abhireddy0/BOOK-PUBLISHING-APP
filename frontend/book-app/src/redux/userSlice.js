@@ -1,29 +1,23 @@
-// src/redux/userSlice.js
+
 import { createSlice } from "@reduxjs/toolkit";
 
-const storedAuth = JSON.parse(
-  localStorage.getItem("storyverse_auth") || "null"
-);
-
-const initialState = {
-  user: storedAuth?.user || null,
-  token: storedAuth?.token || null,
+const initial = {
+  user: null,
+  token: null,
 };
 
 const userSlice = createSlice({
   name: "user",
-  initialState,
+  initialState: initial,
   reducers: {
     setUserData: (state, action) => {
-      state.user = action.payload.user;
-      state.token = action.payload.token;
-    },
-    clearUser: (state) => {
-      state.user = null;
-      state.token = null;
+   
+      const p = action.payload || {};
+      state.user = p.user ?? null;
+      state.token = p.token ?? null;
     },
   },
 });
 
-export const { setUserData, clearUser } = userSlice.actions;
+export const { setUserData } = userSlice.actions;
 export default userSlice.reducer;

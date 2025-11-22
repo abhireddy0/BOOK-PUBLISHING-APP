@@ -1,4 +1,3 @@
-// src/pages/CreateBook.jsx
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -20,7 +19,6 @@ import {
   setPublishApi,
 } from "../api/books";
 
-// ✅ Reusable toast helpers (same style as auth screens)
 const showErrorToast = (message) =>
   toast.error(
     <div className="flex items-start gap-3">
@@ -59,11 +57,9 @@ export default function CreateBook() {
   const [coverPreview, setCoverPreview] = useState(null);
   const [bookInfo, setBookInfo] = useState(null);
 
-  // drag states for better UX
   const [isDraggingCover, setIsDraggingCover] = useState(false);
   const [isDraggingBook, setIsDraggingBook] = useState(false);
 
-  // clean preview URL when unmounting / changing file
   useEffect(() => {
     return () => {
       if (coverPreview) URL.revokeObjectURL(coverPreview);
@@ -164,7 +160,6 @@ export default function CreateBook() {
     }
   };
 
-  // Drag & drop handlers – cover
   const handleCoverDragOver = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -185,7 +180,6 @@ export default function CreateBook() {
     if (file) handleCoverFile(file);
   };
 
-  // Drag & drop handlers – book
   const handleBookDragOver = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -208,7 +202,6 @@ export default function CreateBook() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center px-4 py-10">
-      {/* background glow */}
       <div className="pointer-events-none fixed inset-0 opacity-40">
         <div className="absolute -right-32 -top-32 h-72 w-72 rounded-full bg-sky-500/40 blur-3xl" />
         <div className="absolute -left-24 bottom-0 h-80 w-80 rounded-full bg-purple-500/30 blur-3xl" />
@@ -238,9 +231,7 @@ export default function CreateBook() {
           </button>
         </div>
 
-        {/* main card */}
         <div className="grid gap-6 md:grid-cols-[1.4fr_1fr] bg-slate-900/70 border border-slate-800 rounded-2xl shadow-[0_22px_60px_rgba(15,23,42,0.9)] backdrop-blur p-5 md:p-7">
-          {/* LEFT – form */}
           <form
             onSubmit={handleSubmit}
             className="flex flex-col gap-4 md:border-r md:border-slate-800/70 pr-0 md:pr-6"
@@ -252,7 +243,6 @@ export default function CreateBook() {
               <span>Create book details</span>
             </div>
 
-            {/* Title */}
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium text-slate-200">
                 Title <span className="text-red-400">*</span>
@@ -265,7 +255,6 @@ export default function CreateBook() {
               />
             </div>
 
-            {/* Description */}
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium text-slate-200">
                 Short description <span className="text-red-400">*</span>
@@ -278,7 +267,6 @@ export default function CreateBook() {
               />
             </div>
 
-            {/* Price + publish */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-slate-200">
@@ -317,9 +305,7 @@ export default function CreateBook() {
               </div>
             </div>
 
-            {/* Uploads */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-1">
-              {/* Cover image */}
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-slate-200 flex items-center gap-1">
                   <FiImage className="text-slate-400" />
@@ -342,7 +328,9 @@ export default function CreateBook() {
                 >
                   <div className="flex-1 space-y-1">
                     <p className="text-sm font-medium text-slate-100">
-                      {coverFile ? "Change cover image" : "Click or drop to upload"}
+                      {coverFile
+                        ? "Change cover image"
+                        : "Click or drop to upload"}
                     </p>
                     <p className="text-[11px] text-slate-500">
                       JPG / PNG · Recommended 3:4 ratio
@@ -375,7 +363,6 @@ export default function CreateBook() {
                 </label>
               </div>
 
-              {/* Book file */}
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-slate-200 flex items-center gap-1">
                   <FiFileText className="text-slate-400" />
@@ -429,7 +416,6 @@ export default function CreateBook() {
               </div>
             </div>
 
-            {/* Submit */}
             <div className="flex justify-end pt-3">
               <button
                 type="submit"
@@ -442,7 +428,6 @@ export default function CreateBook() {
             </div>
           </form>
 
-          {/* RIGHT – live preview */}
           <div className="flex flex-col gap-4">
             <div className="text-[11px] uppercase tracking-[0.2em] text-slate-500">
               Live preview
@@ -450,7 +435,6 @@ export default function CreateBook() {
 
             <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4 flex flex-col gap-4 shadow-inner">
               <div className="flex gap-4">
-                {/* book cover preview */}
                 <div className="w-28 h-40 rounded-xl bg-gradient-to-br from-sky-500/30 via-purple-500/20 to-emerald-400/30 border border-slate-700 overflow-hidden flex items-center justify-center">
                   {coverPreview ? (
                     <img
@@ -489,14 +473,13 @@ export default function CreateBook() {
               </div>
 
               <div className="mt-2 rounded-xl border border-slate-800 bg-slate-900/80 px-3 py-2 text-[11px] text-slate-400">
-                <p>✅ Secure payments are handled by Razorpay on the reader side.</p>
+                <p>
+                  ✅ Secure payments are handled by Razorpay on the reader side.
+                </p>
                 <p className="mt-1">
                   ✅ You can always edit price, description, cover & file later
                   from{" "}
-                  <span className="text-slate-200 font-medium">
-                    My Books
-                  </span>
-                  .
+                  <span className="text-slate-200 font-medium">My Books</span>.
                 </p>
               </div>
             </div>

@@ -17,7 +17,6 @@ export default function ChatBot() {
   ]);
   const [loading, setLoading] = useState(false);
 
-  // 🔒 hide chatbot on some pages
   const hideOnRoutes = ["/", "/login", "/signup", "/forgot-password"];
   if (hideOnRoutes.includes(location.pathname)) {
     return null;
@@ -64,8 +63,7 @@ User question: ${trimmed}
         ...prev,
         {
           from: "bot",
-          text:
-            "Oops, I had trouble talking to the AI right now. Please try again in a few seconds 🙏",
+          text: "Oops, I had trouble talking to the AI right now. Please try again in a few seconds 🙏",
         },
       ]);
     } finally {
@@ -80,9 +78,11 @@ User question: ${trimmed}
     }
   };
 
-  // 🧠 simple formatter: split on blank lines into paragraphs
   const renderText = (text) => {
-    const paragraphs = text.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+    const paragraphs = text
+      .split(/\n{2,}/)
+      .map((p) => p.trim())
+      .filter(Boolean);
     return paragraphs.map((p, i) => (
       <p key={i} className="mb-1">
         {p}
@@ -92,7 +92,6 @@ User question: ${trimmed}
 
   return (
     <>
-      {/* Floating icon in bottom-right */}
       <button
         onClick={() => setOpen((o) => !o)}
         className="fixed bottom-5 right-5 h-11 w-11 rounded-full bg-slate-900 text-white shadow-lg flex items-center justify-center text-xl z-40 hover:bg-slate-800 active:scale-95 transition"
@@ -101,10 +100,8 @@ User question: ${trimmed}
         💬
       </button>
 
-      {/* Chat panel */}
       {open && (
         <div className="fixed bottom-20 right-5 w-80 h-96 bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden z-40">
-          {/* Header */}
           <div className="px-4 py-3 bg-slate-900 text-white flex items-center justify-between">
             <div>
               <p className="text-sm font-semibold">StoryVerse Assistant</p>
@@ -120,7 +117,6 @@ User question: ${trimmed}
             </button>
           </div>
 
-          {/* Messages */}
           <div className="flex-1 px-3 py-2 overflow-y-auto bg-slate-50 space-y-2">
             {messages.map((m, idx) => (
               <div
@@ -144,7 +140,6 @@ User question: ${trimmed}
             )}
           </div>
 
-          {/* Input */}
           <div className="border-t border-slate-200 p-2 bg-white">
             <textarea
               rows={2}

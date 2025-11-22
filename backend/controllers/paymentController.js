@@ -18,100 +18,27 @@ function createRazorpayOrder(options) {
   });
 }
 
-const initiateCheckout = async (req, res) => {
-  try {
-    const { bookId } = req.params;
 
-    const book = await Book.findById(bookId);
-    if (!book || !book.published) {
-      return res
-        .status(404)
-        .json({ message: "BOOK NOT AVAILABLE FOR PURCHASE" });
-    }
+// controllers/paymentController.js (init/checkout route)
+const Book = require("../models/bookModel");
 
-    // user cannot buy own book
-    if (String(book.author) === String(req.user.id)) {
-      return res.status(400).json({ message: "You cant buy your own book" });
-    }
+exports.initiateCheckout = async (req, res) => {
+  const { bookId } = req.body;
+  const book = await Book.findById(bookId);
+  if (!book) return res.status(404).json({ message: "Book not found" });
 
-    // check if already paid
-    const alreadypaid = await Order.findOne({
-      book: bookId,
-      buyer: req.user.id,
-      status: "paid",
-    });
-    if (alreadypaid) {
-      return res.status(400).json({ message: "already purchased" });
-    }
-
-    const amountInRupees = book.price ?? 0;
-    const amountPaise = amountInRupees * 100;
-
-    // sanity checks
-    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-      return res
-        .status(500)
-        .json({ message: "Razorpay keys not configured on server" });
-    }
-
-    if (!amountInRupees || amountInRupees <= 0) {
-      return res
-        .status(400)
-        .json({ message: "Invalid book price for checkout" });
-    }
-
-    console.log("Creating Razorpay order:", {
-      amountPaise,
-      bookId,
-      userId: req.user.id,
-    });
-
-    // ✅ use our Promise wrapper (handles callback correctly)
-    const shortReceipt = `rcpt_${bookId.slice(-6)}_${Date.now()
-  .toString()
-  .slice(-6)}`;
-
-const rpOrder = await createRazorpayOrder({
-  amount: amountPaise,
-  currency: "INR",
-  receipt: shortReceipt,
-});
-    // create local pending order
-    const pendingOrder = await Order.create({
-      book: bookId,
-      buyer: req.user.id,
-      amount: amountInRupees,
-      status: "pending",
-    });
-
-    return res.json({
-      message: "Checkout initiated",
-      razorpayKey: process.env.RAZORPAY_KEY_ID,
-      razorpayOrderId: rpOrder.id,
-      amount: amountPaise,
-      currency: "INR",
-      book: {
-        id: book._id,
-        title: book.title,
-        coverImage: book.coverImage,
-        price: book.price,
-      },
-      localOrderId: pendingOrder._id,
-    });
-  } catch (error) {
-    // 🔍 log the ENTIRE error object so we see what Razorpay says
-    console.error("initiateCheckout error RAW:", error);
-
-    const msg =
-      error?.error?.description || // Razorpay often puts message here
-      error?.message ||
-      "Unknown error during checkout";
-
-    return res.status(500).json({
-      message: `Error creating checkout: ${msg}`,
-    });
+  if (String(book.author) === String(req.user.id)) {
+    return res.status(400).json({ message: "Authors cannot purchase their own book." });
   }
+
+  if (!book.published) {
+    return res.status(400).json({ message: "Book is not published yet." });
+  }
+
+  // ... proceed to create Razorpay order
 };
+
+
 
 const verifyPayment = async (req, res) => {
   try {

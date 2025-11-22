@@ -1,4 +1,3 @@
-// src/pages/Signup.jsx
 import React, { useState } from "react";
 import { IoEyeOutline, IoEye } from "react-icons/io5";
 import { Link, useNavigate } from "react-router-dom";
@@ -8,17 +7,13 @@ import { FiAlertCircle, FiCheckCircle } from "react-icons/fi";
 import { signup } from "../api/auth";
 import cover from "../assets/cover.png";
 
-// Reusable toast helpers (✅ now using dark theme so text is visible)
 const showErrorToast = (message) =>
   toast.error(
     <div className="flex items-start gap-3">
       <FiAlertCircle className="text-red-400 text-xl mt-0.5" />
       <span className="text-white text-sm">{message}</span>
     </div>,
-    {
-      icon: false,
-      theme: "dark",
-    }
+    { icon: false, theme: "dark" }
   );
 
 const showSuccessToast = (message) =>
@@ -27,10 +22,7 @@ const showSuccessToast = (message) =>
       <FiCheckCircle className="text-emerald-400 text-xl mt-0.5" />
       <span className="text-white text-sm">{message}</span>
     </div>,
-    {
-      icon: false,
-      theme: "dark",
-    }
+    { icon: false, theme: "dark" }
   );
 
 export default function Signup() {
@@ -41,29 +33,24 @@ export default function Signup() {
     name: "",
     email: "",
     password: "",
-    role: "reader", // DEFAULT → Reader
+    role: "reader",
   });
 
   const [loading, setLoading] = useState(false);
 
-  const onChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSignup = async (e) => {
     e.preventDefault();
-
     if (!form.name || !form.email || !form.password) {
       return showErrorToast("Please fill in all the required fields.");
     }
-
     try {
       setLoading(true);
       await signup(form);
-
       showSuccessToast(
         "Account created successfully! You can now log in to StoryVerse."
       );
-
       nav("/login");
     } catch (err) {
       const msg =
@@ -75,12 +62,14 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-neutral-900 via-neutral-950 to-neutral-800 flex items-center justify-center px-4 py-6">
-      <div className="w-full max-w-5xl bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-white/40">
-        <div className="grid lg:grid-cols-2">
-          {/* LEFT SIDE - FORM */}
-          <div className="px-6 py-8 sm:px-10 sm:py-10 flex items-center">
-            <form onSubmit={handleSignup} className="w-full space-y-4">
+    <div className="min-h-screen w-full bg-gradient-to-br from-neutral-900 via-neutral-950 to-neutral-800 flex items-center justify-center px-4 py-5">
+      <div className="w-full max-w-5xl bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-white/40 lg:max-h-[88vh]">
+        <div className="grid lg:grid-cols-2 lg:h-[82vh]">
+          <div className="px-6 py-8 sm:px-10 sm:py-10 flex items-stretch">
+            <form
+              onSubmit={handleSignup}
+              className="w-full space-y-4 overflow-y-auto pr-1"
+            >
               <div>
                 <p className="text-xs font-semibold tracking-[0.2em] text-neutral-500 uppercase">
                   Welcome to
@@ -94,7 +83,6 @@ export default function Signup() {
                 </p>
               </div>
 
-              {/* Name */}
               <div className="pt-2">
                 <label className="text-xs font-medium text-neutral-700">
                   Name
@@ -108,7 +96,6 @@ export default function Signup() {
                 />
               </div>
 
-              {/* Email */}
               <div>
                 <label className="text-xs font-medium text-neutral-700">
                   Email
@@ -123,7 +110,6 @@ export default function Signup() {
                 />
               </div>
 
-              {/* Password */}
               <div>
                 <label className="text-xs font-medium text-neutral-700">
                   Password
@@ -147,7 +133,6 @@ export default function Signup() {
                 </div>
               </div>
 
-              {/* Role Buttons */}
               <div className="pt-1">
                 <p className="text-xs font-medium text-neutral-700 mb-1.5">
                   Choose your role
@@ -171,7 +156,6 @@ export default function Signup() {
                 </div>
               </div>
 
-              {/* Submit */}
               <button
                 type="submit"
                 disabled={loading}
@@ -193,8 +177,7 @@ export default function Signup() {
             </form>
           </div>
 
-          {/* RIGHT SIDE - VISUAL */}
-          <div className="relative h-[220px] lg:h-full bg-black text-white">
+          <div className="relative h-[240px] lg:h-full bg-black text-white">
             <img
               src={cover}
               alt="books"
@@ -203,12 +186,7 @@ export default function Signup() {
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/70 to-black/30" />
 
             <div className="relative z-10 h-full w-full flex flex-col justify-between p-6 sm:p-8">
-              <div className="flex justify-end">
-                {/* <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/30 backdrop-blur-md text-[10px] uppercase tracking-[0.18em]">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                  Live publishing platform
-                </div> */}
-              </div>
+              <div className="flex justify-end"></div>
 
               <div className="space-y-3 max-w-xs sm:max-w-md">
                 <div className="h-14 w-14 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center text-xl font-bold shadow-md shadow-black/40">

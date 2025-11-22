@@ -1,4 +1,3 @@
-// src/pages/BookDetail.jsx
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
@@ -12,9 +11,7 @@ import ReviewsSection from "../components/ReviewSection";
 
 export default function BookDetail() {
   const { id } = useParams();
-
-  // NOTE: using state.auth here because that’s what you had in this file
-  const { user, token } = useSelector((state) => state.auth) || {};
+  const { user, token } = useSelector((s) => s.user) || {};
 
   const [book, setBook] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -25,36 +22,29 @@ export default function BookDetail() {
   const finalToken = token || localStorage.getItem("token");
 
   const isLoggedIn = !!finalToken;
+
   const isAuthor =
-    user &&
-    book &&
+    !!user &&
+    !!book &&
     String(book.author?._id || book.author) === String(user.id);
+
   const isAdmin = user?.role === "admin";
 
-  // -------- Fetch book ---------- //
   useEffect(() => {
     const fetchBook = async () => {
-      if (!id) {
-        console.error("No book id in URL");
-        setLoading(false);
-        return;
-      }
-
       try {
         const res = await axios.get(`${serverUrl}/books/${id}`);
         setBook(res.data);
       } catch (err) {
-        console.error("BookDetail fetch error:", err);
+        console.error("Book fetch error:", err);
         toast.error("Failed to load book");
       } finally {
         setLoading(false);
       }
     };
-
     fetchBook();
   }, [id]);
 
-  // -------- Check access (purchased?) ---------- //
   useEffect(() => {
     const checkAccess = async () => {
       if (!finalToken) return;
@@ -62,38 +52,29 @@ export default function BookDetail() {
         const res = await axios.get(`${serverUrl}/orders/${id}/access`, {
           headers: { Authorization: `Bearer ${finalToken}` },
         });
-
-        if (res.data?.hasAccess || res.status === 200) {
-          setHasAccess(true); // already purchased
-        }
+        if (res.data?.hasAccess || res.status === 200) setHasAccess(true);
       } catch {
         setHasAccess(false);
       }
     };
-
-    if (isLoggedIn) {
-      checkAccess();
-    }
+    if (isLoggedIn) checkAccess();
   }, [id, finalToken, isLoggedIn]);
 
-  // -------- Buy handler (Razorpay) ---------- //
   const handleBuy = async () => {
     if (!isLoggedIn) {
       toast.info("Please login to purchase");
       nav("/login");
       return;
     }
-
     if (isAuthor) {
       toast.error("You cannot buy your own book");
       return;
     }
-
     try {
       setBuying(true);
 
       if (!window.Razorpay) {
-        toast.error("Razorpay SDK not loaded. Check index.html script tag.");
+        toast.error("Razorpay SDK not loaded. Check index.html.");
         setBuying(false);
         return;
       }
@@ -103,10 +84,9 @@ export default function BookDetail() {
         {},
         { headers: { Authorization: `Bearer ${finalToken}` } }
       );
-
       const data = checkoutRes.data;
 
-      const options = {
+      const rzp = new window.Razorpay({
         key: data.razorpayKey,
         amount: data.amount,
         currency: data.currency,
@@ -114,7 +94,7 @@ export default function BookDetail() {
         description: book.title,
         image: book.coverImage || undefined,
         order_id: data.razorpayOrderId,
-        handler: async function (response) {
+        handler: async (response) => {
           try {
             const verifyRes = await axios.post(
               `${serverUrl}/pay/verify`,
@@ -127,19 +107,13 @@ export default function BookDetail() {
               },
               { headers: { Authorization: `Bearer ${finalToken}` } }
             );
-
-            toast.success(
-              verifyRes.data?.message ||
-                "Payment successful, access unlocked ✅"
-            );
+            toast.success(verifyRes.data?.message || "Payment successful ✅");
             setHasAccess(true);
           } catch (err) {
             console.error("Verify error", err);
-            const msg =
-              err?.response?.data?.message ||
-              err?.message ||
-              "Payment verification failed";
-            toast.error(msg);
+            toast.error(
+              err?.response?.data?.message || "Payment verification failed"
+            );
           }
         },
         prefill: {
@@ -147,23 +121,21 @@ export default function BookDetail() {
           email: user?.email || "",
         },
         theme: { color: "#0f172a" },
-      };
+      });
 
-      const rzp = new window.Razorpay(options);
       rzp.open();
     } catch (err) {
       console.error("Checkout error", err);
-      const msg =
+      toast.error(
         err?.response?.data?.message ||
-        err?.message ||
-        "Failed to start checkout";
-      toast.error(msg);
+          err?.message ||
+          "Failed to start checkout"
+      );
     } finally {
       setBuying(false);
     }
   };
 
-  // -------- Render states ---------- //
   if (loading) {
     return (
       <div className="w-screen h-screen flex flex-col gap-3 items-center justify-center bg-slate-950 text-slate-100">
@@ -195,7 +167,6 @@ export default function BookDetail() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-50">
       <div className="max-w-6xl mx-auto px-4 py-8 md:py-10">
-        {/* Top bar */}
         <div className="flex items-center justify-between gap-3 mb-6">
           <button
             onClick={() => nav(-1)}
@@ -204,7 +175,6 @@ export default function BookDetail() {
             <span className="text-lg">←</span>
             Back to books
           </button>
-
           <div className="flex items-center gap-2 text-[11px] md:text-xs text-slate-400">
             <FiShield className="text-sm" />
             <FaPaypal className="text-sky-400 text-base" />
@@ -213,10 +183,8 @@ export default function BookDetail() {
         </div>
 
         <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(260px,1fr)]">
-          {/* LEFT: Book content */}
           <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-5 md:p-7 shadow-[0_18px_50px_rgba(15,23,42,0.75)] backdrop-blur">
             <div className="flex flex-col md:flex-row gap-6">
-              {/* Cover */}
               <div className="w-full md:w-1/3 flex justify-center">
                 <div className="w-full max-w-xs relative">
                   <div className="absolute -inset-2 rounded-2xl bg-gradient-to-br from-sky-500/20 via-emerald-500/10 to-purple-500/20 blur-2xl opacity-60" />
@@ -237,7 +205,6 @@ export default function BookDetail() {
                 </div>
               </div>
 
-              {/* Info */}
               <div className="flex-1 flex flex-col gap-4">
                 <div>
                   <div className="flex flex-wrap items-center gap-3 mb-2">
@@ -245,20 +212,17 @@ export default function BookDetail() {
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                       StoryVerse Original
                     </p>
-
                     {canDownload && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-sky-500/15 text-sky-200 border border-sky-500/40 px-3 py-1 text-[10px] font-medium">
                         <FiCheckCircle className="text-xs" />
                         Owned
                       </span>
                     )}
-
                     {isAuthor && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/20 text-purple-200 border border-purple-500/40 px-3 py-1 text-[10px] font-medium">
                         Author
                       </span>
                     )}
-
                     {isAdmin && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 text-amber-100 border border-amber-500/40 px-3 py-1 text-[10px] font-medium">
                         Admin
@@ -277,14 +241,12 @@ export default function BookDetail() {
                   </p>
                 </div>
 
-                {/* Description */}
                 <div className="mt-2">
                   <p className="text-sm md:text-[0.95rem] text-slate-200/90 leading-relaxed">
                     {book.description || "No description provided."}
                   </p>
                 </div>
 
-                {/* Meta: status / price / genre */}
                 <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-3 text-[11px] md:text-xs text-slate-400">
                   <div className="flex flex-col gap-1">
                     <span className="uppercase tracking-[0.18em] text-[9px] text-slate-500">
@@ -292,13 +254,13 @@ export default function BookDetail() {
                     </span>
                     <span
                       className={
-                        isPublished
+                        book.published
                           ? "inline-flex items-center gap-1 text-emerald-300"
                           : "inline-flex items-center gap-1 text-amber-300"
                       }
                     >
                       <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                      {isPublished ? "Published" : "Unpublished draft"}
+                      {book.published ? "Published" : "Unpublished draft"}
                     </span>
                   </div>
 
@@ -310,18 +272,8 @@ export default function BookDetail() {
                       ₹{book.price ?? 0}
                     </span>
                   </div>
-
-                  {book.genre && (
-                    <div className="flex flex-col gap-1">
-                      <span className="uppercase tracking-[0.18em] text-[9px] text-slate-500">
-                        Genre
-                      </span>
-                      <span className="text-slate-200">{book.genre}</span>
-                    </div>
-                  )}
                 </div>
 
-                {/* Download / Read link if user has access */}
                 {canDownload && book.fileUrl && (
                   <div className="mt-3">
                     <a
@@ -339,7 +291,6 @@ export default function BookDetail() {
             </div>
           </div>
 
-          {/* RIGHT: Purchase / access card */}
           <aside className="lg:sticky lg:top-8 h-fit">
             <div className="rounded-2xl border border-slate-800 bg-slate-900/80 px-5 py-5 shadow-[0_18px_45px_rgba(15,23,42,0.8)] backdrop-blur">
               <div className="flex items-baseline justify-between mb-3">
@@ -356,72 +307,44 @@ export default function BookDetail() {
                 </div>
               </div>
 
-              {/* If user already has access, highlight reading */}
+              {!isAuthor && !canDownload && book.published && (
+                <button
+                  onClick={handleBuy}
+                  disabled={buying}
+                  className="mt-1 inline-flex w-full items-center justify-center rounded-xl bg-sky-500 text-slate-950 text-xs md:text-sm font-semibold h-11 hover:bg-sky-400 disabled:opacity-60 transition shadow-lg shadow-sky-500/30"
+                >
+                  {buying
+                    ? "Processing payment..."
+                    : "Buy securely with Razorpay"}
+                </button>
+              )}
+
               {canDownload && book.fileUrl && (
                 <a
                   href={book.fileUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-1 inline-flex w-full items-center justify-center rounded-xl bg-emerald-500 text-slate-950 text-xs md:text-sm font-semibold h-11 hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/30"
+                  className="mt-2 inline-flex w-full items-center justify-center rounded-xl bg-emerald-500 text-slate-950 text-xs md:text-sm font-semibold h-11 hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/30"
                 >
                   Start reading now
                 </a>
               )}
 
-              {/* Razorpay purchase button */}
-              <button
-                onClick={handleBuy}
-                disabled={buying || !isPublished}
-                className="mt-3 inline-flex w-full items-center justify-center rounded-xl bg-sky-500 text-slate-950 text-xs md:text-sm font-semibold h-11 hover:bg-sky-400 disabled:opacity-60 disabled:cursor-not-allowed transition shadow-lg shadow-sky-500/30"
-              >
-                {buying
-                  ? "Processing payment..."
-                  : "Buy securely with Razorpay"}
-              </button>
+              {!book.published && (
+                <p className="mt-3 text-amber-300 text-[11px]">
+                  This book is currently{" "}
+                  <span className="font-semibold">not published</span>. Readers
+                  can’t purchase it yet.
+                </p>
+              )}
 
-              <div className="mt-4 space-y-1.5 text-[11px] text-slate-400">
-                {!isLoggedIn && (
-                  <p>
-                    <span className="font-semibold text-slate-200">
-                      Not logged in —
-                    </span>{" "}
-                    you’ll be asked to login before completing the payment.
-                  </p>
-                )}
-
-                {isAuthor && (
-                  <p>
-                    <span className="font-semibold text-amber-300">
-                      You are the author.
-                    </span>{" "}
-                    You already control access to this book.
-                  </p>
-                )}
-
-                {!isPublished && (
-                  <p className="text-amber-300">
-                    This book is currently{" "}
-                    <span className="font-semibold">not published</span>.
-                    Readers cannot purchase it yet.
-                  </p>
-                )}
-
-                {hasAccess && (
-                  <p className="text-emerald-300 flex items-center gap-1">
-                    <FiCheckCircle className="text-sm" /> You already own this
-                    book. Enjoy unlimited reading.
-                  </p>
-                )}
-              </div>
-
-              {/* Bottom security info */}
               <div className="mt-5 pt-4 border-t border-slate-800/80 text-[10px] text-slate-500 space-y-1.5">
                 <p className="flex items-center gap-1">
                   <FiShield className="text-xs" />
                   <FaPaypal className="text-sky-400 text-sm" />
                   <span>
-                    Card / UPI handled by Razorpay. We don&apos;t store your
-                    payment details.
+                    Card / UPI handled by Razorpay. We don’t store your payment
+                    details.
                   </span>
                 </p>
                 <p>📚 Access is tied to your StoryVerse account.</p>
@@ -430,7 +353,6 @@ export default function BookDetail() {
           </aside>
         </div>
 
-        {/* Reviews */}
         <ReviewsSection bookId={id} />
       </div>
     </div>

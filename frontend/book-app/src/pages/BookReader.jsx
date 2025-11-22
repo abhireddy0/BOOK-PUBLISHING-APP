@@ -6,7 +6,6 @@ import { ClipLoader } from "react-spinners";
 import { FiAlertCircle, FiCheckCircle, FiBookOpen } from "react-icons/fi";
 import { getReadableBookApi } from "../api/books";
 
-// Toast helpers
 const showErrorToast = (message) =>
   toast.error(
     <div className="flex items-start gap-3">
@@ -63,8 +62,7 @@ export default function BookReader() {
         }
       } catch (err) {
         const msg =
-          err?.response?.data?.message ||
-          "Unable to open this book right now.";
+          err?.response?.data?.message || "Unable to open this book right now.";
         showErrorToast(msg);
       } finally {
         setLoading(false);
@@ -72,7 +70,6 @@ export default function BookReader() {
     };
 
     fetchBook();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookId]);
 
   const handleOpenBook = () => {
@@ -148,7 +145,6 @@ export default function BookReader() {
           </div>
         ) : (
           <>
-            {/* Top info card */}
             <div className="grid md:grid-cols-[1.4fr_1fr] gap-6">
               <div className="space-y-3">
                 <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[11px] text-emerald-200">
@@ -206,7 +202,6 @@ export default function BookReader() {
               </div>
             </div>
 
-            {/* Open button */}
             <div className="mt-6 flex flex-col items-center gap-3">
               <button
                 onClick={handleOpenBook}
