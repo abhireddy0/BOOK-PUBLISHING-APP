@@ -10,17 +10,13 @@ import { setUserData } from "../redux/userSlice";
 import { login } from "../api/auth";
 import cover from "../assets/cover.png";
 
-// ✅ Reusable toast helpers (same style as Signup)
 const showErrorToast = (message) =>
   toast.error(
     <div className="flex items-start gap-3">
       <FiAlertCircle className="text-red-400 text-xl mt-0.5" />
       <span className="text-white text-sm">{message}</span>
     </div>,
-    {
-      icon: false,
-      theme: "dark",
-    }
+    { icon: false, theme: "dark" }
   );
 
 const showSuccessToast = (message) =>
@@ -29,10 +25,7 @@ const showSuccessToast = (message) =>
       <FiCheckCircle className="text-emerald-400 text-xl mt-0.5" />
       <span className="text-white text-sm">{message}</span>
     </div>,
-    {
-      icon: false,
-      theme: "dark",
-    }
+    { icon: false, theme: "dark" }
   );
 
 export default function Login() {
@@ -53,25 +46,25 @@ export default function Login() {
     try {
       setLoading(true);
 
-      // ✅ Get { message, token, user } from API
-      const data = await login({ email, password });
+      const data = await login({ email, password }); // { token, user }
 
-      // ✅ Save to Redux + localStorage
       dispatch(setUserData(data));
       localStorage.setItem("token", data.token);
+      localStorage.setItem("storyverse_auth", JSON.stringify(data));
 
       showSuccessToast("Logged in successfully ✨");
 
-      // ✅ Role-based redirect
+      // ⭐ UPDATED ROLE LOGIC ⭐
       if (data.user.role === "admin") {
         nav("/dashboard/admin");
-      } else if (data.user.role === "author") {
-        nav("/books/new"); // author → publish page
       } else {
-        nav("/"); // reader
+        // authors + readers → landing page
+        nav("/");
       }
     } catch (err) {
-      showErrorToast(err?.response?.data?.message || "Login failed. Please try again.");
+      showErrorToast(
+        err?.response?.data?.message || "Login failed. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -92,7 +85,8 @@ export default function Login() {
                   Log in to StoryVerse
                 </h1>
                 <p className="text-sm text-neutral-500 mt-2">
-                  Continue your journey of reading, writing, and publishing stories.
+                  Continue your journey of reading, writing, and publishing
+                  stories.
                 </p>
               </div>
 
@@ -176,14 +170,7 @@ export default function Login() {
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/70 to-black/30" />
 
             <div className="relative z-10 h-full w-full flex flex-col justify-between p-6 sm:p-8">
-              <div className="flex justify-end">
-                {/* <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/30 backdrop-blur-md text-[10px] uppercase tracking-[0.18em]">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                  Secure login
-                </div> */}
-              </div>
-
-              <div className="space-y-3 max-w-xs sm:max-w-md">
+              <div className="space-y-3 max-w-xs sm:max-w-md mt-auto mb-4">
                 <div className="h-14 w-14 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center text-xl font-bold shadow-md shadow-black/40">
                   SV
                 </div>
@@ -191,8 +178,8 @@ export default function Login() {
                   Good to see you again ✍️
                 </h3>
                 <p className="text-sm text-white/70">
-                  Pick up where you left off — manage your books, track sales, and
-                  discover new stories.
+                  Pick up where you left off — manage your books, track sales,
+                  and discover new stories.
                 </p>
 
                 <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-white/80">
@@ -207,11 +194,11 @@ export default function Login() {
                   </span>
                 </div>
               </div>
-
               <div className="hidden lg:flex justify-between items-center text-[11px] text-white/60 pt-4">
                 <p>“Every login is a new chapter.”</p>
                 <p>StoryVerse · 2025</p>
               </div>
+              yes
             </div>
           </div>
         </div>

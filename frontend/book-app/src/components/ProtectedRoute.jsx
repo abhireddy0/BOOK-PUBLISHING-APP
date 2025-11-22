@@ -6,6 +6,7 @@ import { Navigate } from "react-router-dom";
 export default function ProtectedRoute({ allowedRoles, children }) {
   const { user, token } = useSelector((state) => state.user) || {};
 
+  // Also fall back to localStorage (for page refresh)
   const storedAuth = JSON.parse(
     localStorage.getItem("storyverse_auth") || "null"
   );
@@ -13,7 +14,7 @@ export default function ProtectedRoute({ allowedRoles, children }) {
   const finalToken = token || storedAuth?.token;
   const finalUser = user || storedAuth?.user;
 
-  // Not logged in at all
+  // Not logged in
   if (!finalToken) {
     return <Navigate to="/login" replace />;
   }
@@ -24,9 +25,9 @@ export default function ProtectedRoute({ allowedRoles, children }) {
     allowedRoles.length > 0 &&
     (!finalUser || !allowedRoles.includes(finalUser.role))
   ) {
+    // Just send them home
     return <Navigate to="/" replace />;
   }
 
-  // OK – show the page
   return children;
 }

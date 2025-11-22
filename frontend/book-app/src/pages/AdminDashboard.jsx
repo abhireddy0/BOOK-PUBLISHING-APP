@@ -1,11 +1,20 @@
 // src/pages/AdminDashboard.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import { ClipLoader } from "react-spinners";
 import { toast } from "react-toastify";
 import { serverUrl } from "../config/server";
 import { useNavigate } from "react-router-dom";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Cell,
+} from "recharts";
 
 export default function AdminDashboard() {
   const { user, token } = useSelector((state) => state.user) || {};
@@ -39,6 +48,21 @@ export default function AdminDashboard() {
     fetchStats();
   }, [finalToken]);
 
+  // ---- derive data for cards + chart ----
+  const totals = stats?.totals || {};
+  const recentUsers = stats?.recentUsers || [];
+  const recentBooks = stats?.recentBooks || [];
+  const latestOrders = stats?.latestOrders || [];
+
+  const chartData = useMemo(
+    () => [
+      { label: "Users", value: totals.totalUsers ?? 0 },
+      { label: "Books", value: totals.totalBooks ?? 0 },
+      { label: "Sales", value: totals.totalSales ?? 0 },
+    ],
+    [totals]
+  );
+
   if (loading) {
     return (
       <div className="w-screen h-screen flex items-center justify-center bg-slate-50">
@@ -57,11 +81,6 @@ export default function AdminDashboard() {
       </div>
     );
   }
-
-  const totals = stats?.totals || {};
-  const recentUsers = stats?.recentUsers || [];
-  const recentBooks = stats?.recentBooks || [];
-  const latestOrders = stats?.latestOrders || [];
 
   return (
     <div className="min-h-screen bg-slate-50 px-6 py-6">
@@ -99,7 +118,6 @@ export default function AdminDashboard() {
             {totals.totalUsers ?? 0}
           </p>
         </div>
-
         <div className="rounded-2xl bg-white border border-slate-200 p-4 shadow-sm">
           <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
             Total books
@@ -108,7 +126,6 @@ export default function AdminDashboard() {
             {totals.totalBooks ?? 0}
           </p>
         </div>
-
         <div className="rounded-2xl bg-white border border-slate-200 p-4 shadow-sm">
           <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
             Total sales
@@ -117,7 +134,6 @@ export default function AdminDashboard() {
             {totals.totalSales ?? 0}
           </p>
         </div>
-
         <div className="rounded-2xl bg-white border border-slate-200 p-4 shadow-sm">
           <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
             Total revenue
@@ -128,7 +144,72 @@ export default function AdminDashboard() {
         </div>
       </section>
 
-      {/* 3 small tables: users, books, orders */}
+      {/* Cool bar chart */}
+      <section className="mb-8 rounded-2xl bg-white border border-slate-200 p-4 shadow-sm">
+        <h2 className="text-sm font-semibold text-slate-900 mb-1">
+          Platform overview
+        </h2>
+        <p className="text-[11px] text-slate-500 mb-3">
+          High-level counts for users, books and sales.
+        </p>
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData} barSize={45}>
+              <defs>
+                <linearGradient id="usersGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.95} />
+                  <stop offset="100%" stopColor="#38bdf8" stopOpacity={0.6} />
+                </linearGradient>
+                <linearGradient id="booksGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#a855f7" stopOpacity={0.95} />
+                  <stop offset="100%" stopColor="#a855f7" stopOpacity={0.6} />
+                </linearGradient>
+                <linearGradient id="salesGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#22c55e" stopOpacity={0.95} />
+                  <stop offset="100%" stopColor="#22c55e" stopOpacity={0.6} />
+                </linearGradient>
+              </defs>
+
+              <XAxis
+                dataKey="label"
+                tick={{ fontSize: 11, fill: "#64748b" }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                allowDecimals={false}
+                tick={{ fontSize: 11, fill: "#64748b" }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <Tooltip
+                cursor={{ fill: "rgba(148,163,184,0.12)" }}
+                contentStyle={{
+                  fontSize: 12,
+                  borderRadius: 8,
+                  border: "1px solid #e2e8f0",
+                }}
+              />
+              <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                {chartData.map((entry) => (
+                  <Cell
+                    key={entry.label}
+                    fill={
+                      entry.label === "Users"
+                        ? "url(#usersGradient)"
+                        : entry.label === "Books"
+                        ? "url(#booksGradient)"
+                        : "url(#salesGradient)"
+                    }
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </section>
+
+      {/* 3 small tables */}
       <section className="grid gap-4 lg:grid-cols-3">
         {/* Recent users */}
         <div className="rounded-2xl bg-white border border-slate-200 p-4 shadow-sm">

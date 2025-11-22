@@ -1,8 +1,8 @@
+// src/pages/Landing.jsx
 import React, { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import gsap from "gsap";
-
 import {
   FiBookOpen,
   FiPenTool,
@@ -16,7 +16,6 @@ export default function Landing() {
   const heroRef = useRef(null);
   const floatRef = useRef(null);
 
-  // GSAP animations
   useEffect(() => {
     if (!heroRef.current) return;
 
@@ -44,60 +43,17 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-50 relative overflow-hidden">
-
       {/* Background blobs */}
       <div className="pointer-events-none fixed inset-0 opacity-50">
         <div className="absolute -right-40 -top-20 h-72 w-72 rounded-full bg-sky-500/35 blur-3xl" />
         <div className="absolute -left-32 bottom-0 h-80 w-80 rounded-full bg-purple-500/30 blur-3xl" />
       </div>
 
-      {/* NAVBAR */}
-      <header className="relative z-20 border-b border-slate-800/70 bg-slate-950/70 backdrop-blur">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-
-          {/* Logo */}
-          <button onClick={() => nav("/")} className="flex items-center gap-2 group">
-            <div className="h-8 w-8 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center text-xs font-semibold tracking-[0.18em]">
-              SV
-            </div>
-            <div className="flex flex-col leading-tight">
-              <span className="text-sm font-semibold uppercase">StoryVerse</span>
-              <span className="text-[10px] text-slate-400">Read · Publish · Earn</span>
-            </div>
-          </button>
-
-          {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-6 text-xs uppercase tracking-[0.16em] text-slate-400">
-            <button onClick={scrollToFeatures} className="hover:text-white">Features</button>
-            <button onClick={() => nav("/books")} className="hover:text-white">Browse books</button>
-            <button onClick={() => nav("/my-books")} className="hover:text-white">Author studio</button>
-          </nav>
-
-          {/* Auth buttons */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => nav("/login")}
-              className="h-9 px-3 rounded-lg border border-slate-700 text-xs text-slate-200 hover:bg-slate-900"
-            >
-              Log in
-            </button>
-            <button
-              onClick={() => nav("/signup")}
-              className="h-9 px-3 rounded-lg bg-sky-500 text-xs font-semibold text-slate-950 hover:bg-sky-400 shadow-lg shadow-sky-500/30"
-            >
-              Get started
-            </button>
-          </div>
-        </div>
-      </header>
-
       {/* MAIN CONTENT */}
       <main className="relative z-10">
-
         {/* HERO SECTION */}
         <section className="max-w-7xl mx-auto px-4 pt-10 pb-12 md:pt-14 md:pb-16">
           <div className="grid gap-10 lg:grid-cols-[1.5fr_1.2fr] items-center">
-
             {/* LEFT SIDE */}
             <motion.div
               ref={heroRef}
@@ -143,11 +99,9 @@ export default function Landing() {
                   Become an author
                 </button>
               </div>
-
-              {/* ⭐️ STATS REMOVED HERE ⭐️ */}
             </motion.div>
 
-            {/* RIGHT SIDE — animated showcase */}
+            {/* RIGHT SIDE – placeholder / animation */}
             <motion.div
               ref={floatRef}
               initial={{ opacity: 0, x: 40 }}
@@ -157,9 +111,7 @@ export default function Landing() {
             >
               <div className="absolute -top-10 -right-8 h-32 w-32 rounded-full bg-sky-500/30 blur-3xl" />
               <div className="absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-purple-500/30 blur-3xl" />
-
-              {/* Here you can add your mockup UI */}
-              {/* For now left empty as you asked */}
+              {/* You can add your mockup / preview card here */}
             </motion.div>
           </div>
         </section>
@@ -208,41 +160,6 @@ export default function Landing() {
             />
           </div>
         </section>
-
-        {/* AUTHOR SECTION */}
-        <section className="max-w-7xl mx-auto px-4 pb-16">
-          <div className="rounded-3xl border border-slate-800 bg-slate-900/80 px-6 py-7 md:px-8 md:py-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_18px_60px_rgba(15,23,42,0.9)]">
-            <div className="space-y-2">
-              <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">
-                For authors
-              </p>
-              <h3 className="text-lg md:text-xl font-semibold">
-                Ready to publish your first book?
-              </h3>
-              <p className="text-xs md:text-sm text-slate-300 max-w-xl">
-                Upload a PDF or EPUB, set your price and go live. Control your
-                entire publishing workflow inside StoryVerse.
-              </p>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={() => nav("/books/new")}
-                className="inline-flex items-center gap-2 h-10 px-5 rounded-xl bg-emerald-500 text-slate-950 font-semibold hover:bg-emerald-400 shadow-lg shadow-emerald-500/30"
-              >
-                Publish a book
-              </button>
-
-              <button
-                onClick={() => nav("/my-books")}
-                className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-slate-700 text-xs text-slate-200 hover:bg-slate-900"
-              >
-                Go to author studio
-              </button>
-            </div>
-          </div>
-        </section>
-
       </main>
     </div>
   );

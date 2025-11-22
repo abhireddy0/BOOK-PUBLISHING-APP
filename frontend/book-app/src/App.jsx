@@ -1,7 +1,8 @@
 // src/App.jsx
 import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 
+// Pages
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -10,105 +11,125 @@ import MyBooks from "./pages/MyBooks";
 import EditBook from "./pages/EditBook";
 import BookDetail from "./pages/BookDetail";
 import MyPurchases from "./pages/MyPurchases";
-import BooksList from  "./pages/BooksList"
+import BooksList from "./pages/BooksList";
 import CreateBook from "./pages/CreateBook";
-import BookReader from "./pages/BookReader"
+import BookReader from "./pages/BookReader";
+import AdminDashboard from "./pages/AdminDashboard";
+import Landing from "./pages/Landing";
+import Profile from "./pages/Profile"; // 👈 NEW
+
+// Components
 import ProtectedRoute from "./components/ProtectedRoute";
-import AdminDashboard from "./pages/AdminDashboard"
-import Landing from "./pages/Landing"
+import Navbar from "./components/Navbar";
+import ChatBot from "./components/ChatBot";
 
+function AppInner() {
+  const location = useLocation();
 
+  // Hide Navbar on authentication pages
+  const hideNavRoutes = ["/login", "/signup", "/forgot-password"];
+  const showNavbar = !hideNavRoutes.includes(location.pathname);
 
-export default function App() {
   return (
-    <Routes>
-      {/* Public home -> show all books */}
-       <Route path="/" element={<Landing />} />
-      <Route path="/books" element={<BooksList />} />
-      {/* <Route path="/" element={<BooksList />} /> */}
+    <>
+      {showNavbar && <Navbar />}
 
-      {/* Auth pages */}
-      <Route path="/signup" element={<Signup />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
+      {/* Adds spacing because Navbar is fixed */}
+      <div className={showNavbar ? "pt-14" : ""}>
+        <Routes>
+          {/* Public pages */}
+          <Route path="/" element={<Landing />} />
+          <Route path="/books" element={<BooksList />} />
+          <Route path="/books/:id" element={<BookDetail />} />
 
-      {/* Public book detail page */}
-      <Route path="/books/:id" element={<BookDetail />} />
+          {/* Auth pages */}
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
 
-      {/* Create new book – author only */}
-      <Route
-        path="/books/new"
-        element={
-          <ProtectedRoute allowedRoles={["author"]}>
-            <CreateBook />
-          </ProtectedRoute>
-        }
-      />
+          {/* Reader / Author / Admin pages */}
+          <Route
+            path="/purchases"
+            element={
+              <ProtectedRoute allowedRoles={["reader", "author", "admin"]}>
+                <MyPurchases />
+              </ProtectedRoute>
+            }
+          />
 
-      {/* Edit book – author only */}
-      <Route
-        path="/books/:id/edit"
-        element={
-          <ProtectedRoute allowedRoles={["author"]}>
-            <EditBook />
-          </ProtectedRoute>
-        }
-      />
+          {/* Profile page (all roles allowed) */}
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute allowedRoles={["reader", "author", "admin"]}>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
 
-      {/* Author dashboard */}
-      <Route
-        path="/dashboard/author"
-        element={
-          <ProtectedRoute allowedRoles={["author"]}>
-            <AuthorDashboard />
-          </ProtectedRoute>
-        }
-      />
+          {/* Author-only pages */}
+          <Route
+            path="/dashboard/author"
+            element={
+              <ProtectedRoute allowedRoles={["author"]}>
+                <AuthorDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-books"
+            element={
+              <ProtectedRoute allowedRoles={["author"]}>
+                <MyBooks />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/books/new"
+            element={
+              <ProtectedRoute allowedRoles={["author"]}>
+                <CreateBook />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/books/:id/edit"
+            element={
+              <ProtectedRoute allowedRoles={["author"]}>
+                <EditBook />
+              </ProtectedRoute>
+            }
+          />
 
-      {/* Admin dashboard */}
-      <Route
-        path="/dashboard/admin"
-        element={
-          <ProtectedRoute allowedRoles={["admin"]}>
-            <AdminDashboard />
-          </ProtectedRoute>
-        }
-      />
+          {/* Book reader (any logged-in user) */}
+          <Route
+            path="/books/:id/read"
+            element={
+              <ProtectedRoute>
+                <BookReader />
+              </ProtectedRoute>
+            }
+          />
 
-      {/* My books */}
-      <Route
-        path="/my-books"
-        element={
-          <ProtectedRoute allowedRoles={["author"]}>
-            <MyBooks />
-          </ProtectedRoute>
-        }
-      />
+          {/* Admin-only */}
+          <Route
+            path="/dashboard/admin"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
 
-      <Route
-    path="/books/:id/read"
-    element={
-      <ProtectedRoute>
-        <BookReader />
-      </ProtectedRoute>
-    }
-  />
+          {/* Not found → redirect */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
 
-
-      {/* My purchases / library */}
-      <Route
-        path="/purchases"
-        element={
-          <ProtectedRoute allowedRoles={["reader", "author", "admin"]}>
-            <MyPurchases />
-          </ProtectedRoute>
-        }
-      />
-
-      
-
-      {/* Fallback */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+      {/* Floating AI bot */}
+      <ChatBot />
+    </>
   );
 }
+
+export default AppInner;

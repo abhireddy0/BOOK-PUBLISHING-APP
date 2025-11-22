@@ -1,4 +1,4 @@
-// routes/dashboardRoutes.js
+// backend/routes/dashboardRoutes.js
 const express = require("express");
 const router = express.Router();
 

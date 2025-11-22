@@ -1,18 +1,22 @@
-// controllers/dashboardController.js
+// backend/controllers/dashboardController.js
 const Book = require("../models/bookModel");
 const Order = require("../models/orderModel");
 const Review = require("../models/reviewModel");
-const User = require("../models/userModel"); 
+const User = require("../models/userModel");
+const ActivityLog = require("../models/activityLogModel");
 
-// ---------- AUTHOR STATS (you already had this) ----------
+// 🔹 Author stats
 const getAuthorStats = async (req, res) => {
   try {
-    const authorId = req.user.id;
+    const authorId = req.user.id; // authMiddleware sets { id, role }
 
-    const books = await Book.find({ author: authorId }, "_id title");
+    // 1) all books by this author
+    const books = await Book.find({ author: authorId }, "_id title published");
     const bookIds = books.map((b) => b._id);
+
     const totalBooks = books.length;
 
+    // 2) all PAID orders for this author's books
     const paidOrders = await Order.find({
       status: "paid",
       book: { $in: bookIds },
@@ -22,6 +26,7 @@ const getAuthorStats = async (req, res) => {
 
     const totalSales = paidOrders.length;
 
+    // 3) this month revenue
     const now = new Date();
     const start = new Date(now.getFullYear(), now.getMonth(), 1);
     const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
@@ -35,6 +40,7 @@ const getAuthorStats = async (req, res) => {
       0
     );
 
+    // 4) average rating from all reviews for this author's books
     let avgRating = null;
     if (bookIds.length > 0) {
       const reviews = await Review.find(
@@ -50,6 +56,7 @@ const getAuthorStats = async (req, res) => {
       }
     }
 
+    // optional: latest orders for this author
     const latestOrders = paidOrders.slice(0, 5).map((o) => ({
       id: o._id,
       bookTitle: o.book?.title || "Untitled",
@@ -63,25 +70,26 @@ const getAuthorStats = async (req, res) => {
       thisMonthRevenue,
       avgRating,
       latestOrders,
+      // you can also send books if you want:
+      // books,
     });
   } catch (err) {
-    console.error("Dashboard error:", err);
+    console.error("Author dashboard error:", err);
     return res.status(500).json({
       message: "Failed to load dashboard stats",
     });
   }
 };
 
-// ---------- ADMIN STATS (NEW) ----------
+// 🔹 Admin stats + Activity log
 const getAdminStats = async (req, res) => {
   try {
-    // 1) Top-level counts
+    // basic totals
     const [totalUsers, totalBooks, paidOrders] = await Promise.all([
-      User.countDocuments({}),
-      Book.countDocuments({}),
+      User.countDocuments(),
+      Book.countDocuments(),
       Order.find({ status: "paid" })
-        .populate("book", "title")
-        .populate("buyer", "name email")
+        .populate("book buyer", "title name email")
         .sort({ createdAt: -1 }),
     ]);
 
@@ -91,23 +99,27 @@ const getAdminStats = async (req, res) => {
       0
     );
 
-    // 2) Recent lists (for small tables)
-    const [recentUsers, recentBooks] = await Promise.all([
-      User.find({}, "name email role createdAt")
-        .sort({ createdAt: -1 })
-        .limit(5),
-      Book.find({}, "title author price published createdAt")
-        .populate("author", "name")
-        .sort({ createdAt: -1 })
-        .limit(5),
-    ]);
-
     const latestOrders = paidOrders.slice(0, 5).map((o) => ({
       id: o._id,
       bookTitle: o.book?.title || "Untitled",
       buyerName: o.buyer?.name || "Unknown",
-      amount: o.amount,
-      createdAt: o.createdAt,
+      amount: o.amount || 0,
+    }));
+
+    // recent activity logs
+    const rawLogs = await ActivityLog.find()
+      .populate("user", "name email role")
+      .sort({ createdAt: -1 })
+      .limit(20);
+
+    const recentActivity = rawLogs.map((log) => ({
+      id: log._id,
+      userName: log.user?.name || "Unknown",
+      userEmail: log.user?.email || "",
+      userRole: log.user?.role || "",
+      action: log.action,
+      entityType: log.entityType,
+      createdAt: log.createdAt,
     }));
 
     return res.json({
@@ -117,14 +129,18 @@ const getAdminStats = async (req, res) => {
         totalSales,
         totalRevenue,
       },
-      recentUsers,
-      recentBooks,
       latestOrders,
+      recentActivity,
     });
   } catch (err) {
     console.error("Admin dashboard error:", err);
-    return res.status(500).json({ message: "Failed to load admin stats" });
+    return res
+      .status(500)
+      .json({ message: "Failed to load admin dashboard stats" });
   }
 };
 
-module.exports = { getAuthorStats, getAdminStats };
+module.exports = {
+  getAuthorStats,
+  getAdminStats,
+};

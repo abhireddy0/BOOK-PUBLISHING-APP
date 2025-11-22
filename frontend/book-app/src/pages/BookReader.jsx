@@ -1,4 +1,3 @@
-// src/pages/BookReader.jsx
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -7,7 +6,7 @@ import { ClipLoader } from "react-spinners";
 import { FiAlertCircle, FiCheckCircle, FiBookOpen } from "react-icons/fi";
 import { getReadableBookApi } from "../api/books";
 
-// Toast helpers (same style as auth pages)
+// Toast helpers
 const showErrorToast = (message) =>
   toast.error(
     <div className="flex items-start gap-3">
@@ -27,8 +26,7 @@ const showSuccessToast = (message) =>
   );
 
 export default function BookReader() {
-  const params = useParams();
-  const bookId = params.id; // ✅ explicit, simple
+  const { id: bookId } = useParams();
   const nav = useNavigate();
   const { token } = useSelector((state) => state.user) || {};
 
@@ -48,13 +46,10 @@ export default function BookReader() {
         }
 
         if (!bookId) {
-          // safety guard
           showErrorToast("Invalid book URL. Book ID is missing.");
           nav("/my-books");
           return;
         }
-
-        console.log("BookReader → bookId from URL:", bookId); // 👀 debug in console
 
         setLoading(true);
         const data = await getReadableBookApi(bookId, finalToken);
@@ -63,7 +58,6 @@ export default function BookReader() {
         setCanRead(!!data.canRead);
         setReason(data.reason);
 
-        // Nice info toast for author
         if (data.reason === "author") {
           showSuccessToast("You are viewing your own book as an author.");
         }
@@ -89,6 +83,14 @@ export default function BookReader() {
     window.open(book.fileUrl, "_blank", "noopener,noreferrer");
   };
 
+  const handleBack = () => {
+    if (window.history.length > 2) {
+      nav(-1);
+    } else {
+      nav("/my-books");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-5xl bg-slate-900/80 border border-slate-800 rounded-2xl shadow-[0_22px_60px_rgba(15,23,42,0.9)] backdrop-blur p-5 md:p-7 text-slate-50">
@@ -111,10 +113,10 @@ export default function BookReader() {
           </div>
 
           <button
-            onClick={() => nav("/my-books")}
+            onClick={handleBack}
             className="text-xs md:text-sm px-3 py-1.5 rounded-lg border border-slate-600 text-slate-200 hover:bg-slate-800 whitespace-nowrap"
           >
-            ← Back to My Books
+            ← Back
           </button>
         </div>
 
@@ -131,7 +133,6 @@ export default function BookReader() {
             </p>
           </div>
         ) : !canRead ? (
-          // If backend said no access
           <div className="w-full flex flex-col items-center justify-center py-16 gap-3 text-center">
             <FiAlertCircle className="text-red-400 text-2xl" />
             <p className="text-sm text-slate-200">
