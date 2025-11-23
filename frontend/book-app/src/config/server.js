@@ -1,1 +1,1 @@
-export const serverUrl = "https://13.201.81.36:3990";
+export const serverUrl = import.meta.env.VITE_API_URL;

@@ -2,7 +2,7 @@
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const Order = require("../models/orderModel");
-const Book = require("../models/bookModel"); // ← keep only ONE of these
+const Book = require("../models/bookModel"); 
 
 const razor = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
