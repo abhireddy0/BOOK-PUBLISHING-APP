@@ -1,12 +1,12 @@
-
+// backend/controllers/paymentController.js
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
 
 const Order = require("../models/orderModel");
-const Book  = require("../models/bookModel");   
+const Book  = require("../models/bookModel"); // ← exactly one declaration
 
 const razor = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
+  key_id:     process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
@@ -17,10 +17,14 @@ async function initiateCheckout(req, res) {
 
     const book = await Book.findById(bookId);
     if (!book) return res.status(404).json({ message: "Book not found" });
-    if (!book.published) return res.status(400).json({ message: "Book is not published" });
+    if (!book.published) {
+      return res.status(400).json({ message: "Book is not published" });
+    }
 
     const amountInPaise = Math.round(Number(book.price || 0) * 100);
-    if (amountInPaise <= 0) return res.status(400).json({ message: "This book is free" });
+    if (amountInPaise <= 0) {
+      return res.status(400).json({ message: "This book is free" });
+    }
 
     const localOrder = await Order.create({
       book: book._id,
@@ -68,10 +72,10 @@ async function verifyPayment(req, res) {
       return res.status(400).json({ message: "Missing payment fields" });
     }
 
-    const toSign = `${razorpay_order_id}|${razorpay_payment_id}`;
+    const payload = `${razorpay_order_id}|${razorpay_payment_id}`;
     const expected = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-      .update(toSign)
+      .update(payload)
       .digest("hex");
 
     if (expected !== razorpay_signature) {
