@@ -1,6 +1,6 @@
 const User = require("../models/userModel");
 const sendMail = require("../config/sendMails");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const genToken = require("../config/token");
 
 const signup = async (req, res) => {
