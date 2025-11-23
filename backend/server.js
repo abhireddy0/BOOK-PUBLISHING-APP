@@ -40,5 +40,5 @@ app.use("/payments", PaymentRouter);
 
 const PORT = process.env.PORT || 3990;
 app.listen(PORT, () => {
-  console.log(`🚀 server is running on port ${PORT}     ABHISHEK REDDY PUSHED CODE`);
+  console.log(`🚀 server is running on port ${PORT} `);
 });
