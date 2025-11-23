@@ -1,8 +1,9 @@
 // backend/controllers/paymentController.js
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
+
 const Order = require("../models/orderModel");
-const Book = require("../models/bookModel"); 
+const Book  = require("../models/bookModel");   // <— declare ONCE
 
 const razor = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -16,15 +17,10 @@ async function initiateCheckout(req, res) {
 
     const book = await Book.findById(bookId);
     if (!book) return res.status(404).json({ message: "Book not found" });
-
-    if (!book.published) {
-      return res.status(400).json({ message: "Book is not published" });
-    }
+    if (!book.published) return res.status(400).json({ message: "Book is not published" });
 
     const amountInPaise = Math.round(Number(book.price || 0) * 100);
-    if (amountInPaise <= 0) {
-      return res.status(400).json({ message: "This book is free" });
-    }
+    if (amountInPaise <= 0) return res.status(400).json({ message: "This book is free" });
 
     const localOrder = await Order.create({
       book: book._id,
@@ -66,17 +62,16 @@ async function verifyPayment(req, res) {
       razorpay_payment_id,
       razorpay_signature,
       localOrderId,
-      bookId,
     } = req.body;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
       return res.status(400).json({ message: "Missing payment fields" });
     }
 
-    const signPayload = `${razorpay_order_id}|${razorpay_payment_id}`;
+    const toSign = `${razorpay_order_id}|${razorpay_payment_id}`;
     const expected = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-      .update(signPayload)
+      .update(toSign)
       .digest("hex");
 
     if (expected !== razorpay_signature) {
@@ -84,19 +79,15 @@ async function verifyPayment(req, res) {
     }
 
     const order = await Order.findById(localOrderId);
-    if (!order)
-      return res.status(404).json({ message: "Local order not found" });
+    if (!order) return res.status(404).json({ message: "Local order not found" });
 
     order.status = "paid";
     order.providerPaymentId = razorpay_payment_id;
-    order.providerOrderId = razorpay_order_id;
-    order.verifiedAt = new Date();
+    order.providerOrderId   = razorpay_order_id;
+    order.verifiedAt        = new Date();
     await order.save();
 
-    return res.json({
-      message: "Payment verified",
-      orderId: String(order._id),
-    });
+    return res.json({ message: "Payment verified", orderId: String(order._id) });
   } catch (err) {
     console.error("verifyPayment error:", err);
     return res.status(500).json({ message: "Failed to verify payment" });
