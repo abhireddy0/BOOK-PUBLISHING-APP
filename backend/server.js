@@ -35,7 +35,7 @@ app.use("/dashboard", dashboardRoutes);
 app.use("/gemini", GeminiRouter);
 app.use("/status",(req,res)=>{res.send(200)})
 app.use("/users", require("./routes/userRoutes"));
-app.use("/pay", PaymentRouter);
+app.use("/payments", PaymentRouter);
 
 
 const PORT = process.env.PORT || 3990;
