@@ -1,4 +1,3 @@
-// backend/controllers/bookController.js
 const Book = require("../models/bookModel");
 const Order = require("../models/orderModel");
 const cloudinary = require("../config/cloudinary");
@@ -6,9 +5,8 @@ const { logActivity } = require("../utils/activityLogger");
 
 const uploadStream = (options, buffer) =>
   new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(
-      options,
-      (err, result) => (err ? reject(err) : resolve(result))
+    const stream = cloudinary.uploader.upload_stream(options, (err, result) =>
+      err ? reject(err) : resolve(result)
     );
     stream.end(buffer);
   });
@@ -37,7 +35,6 @@ const uploadBookCover = async (req, res) => {
     book.coverImage = result.secure_url;
     await book.save();
 
-    // 🔹 activity log: updated cover
     await logActivity(req, {
       action: `Updated cover for book "${book.title}"`,
       entityType: "Book",
@@ -73,12 +70,10 @@ const uploadBookFile = async (req, res) => {
       return res.status(400).json({ message: "No file provided" });
     }
 
-    // upload to cloudinary as raw file:
     const result = await new Promise((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
         { folder: "books/files", resource_type: "raw" },
-        (error, resUpload) =>
-          error ? reject(error) : resolve(resUpload)
+        (error, resUpload) => (error ? reject(error) : resolve(resUpload))
       );
       stream.end(req.file.buffer);
     });
@@ -86,7 +81,6 @@ const uploadBookFile = async (req, res) => {
     book.fileUrl = result.secure_url;
     await book.save();
 
-    // 🔹 activity log: uploaded file
     await logActivity(req, {
       action: `Uploaded reading file for "${book.title}"`,
       entityType: "Book",
@@ -118,15 +112,12 @@ const setPublish = async (req, res) => {
 
     const { published } = req.body || {};
     if (typeof published !== "boolean") {
-      return res
-        .status(400)
-        .json({ message: "published must be true/false" });
+      return res.status(400).json({ message: "published must be true/false" });
     }
 
     book.published = published;
     await book.save();
 
-    // 🔹 activity log: publish/unpublish
     await logActivity(req, {
       action: `${published ? "Published" : "Unpublished"} the book "${
         book.title
@@ -187,7 +178,6 @@ const createBook = async (req, res) => {
       author: req.user.id,
     });
 
-    // 🔹 activity log: created book
     await logActivity(req, {
       action: `Created a new book: "${book.title}"`,
       entityType: "Book",
@@ -197,9 +187,7 @@ const createBook = async (req, res) => {
 
     return res.status(201).json({ message: "Book Created", book });
   } catch (error) {
-    return res
-      .status(500)
-      .json({ message: "Server error creating book" });
+    return res.status(500).json({ message: "Server error creating book" });
   }
 };
 
@@ -221,14 +209,12 @@ const updateBook = async (req, res) => {
     const { title, description, tags, price, published } = req.body || {};
     if (title !== undefined) book.title = title;
     if (description !== undefined) book.description = description;
-    if (tags !== undefined)
-      book.tags = Array.isArray(tags) ? tags : [tags];
+    if (tags !== undefined) book.tags = Array.isArray(tags) ? tags : [tags];
     if (price !== undefined) book.price = price;
     if (published !== undefined) book.published = published;
 
     await book.save();
 
-    // 🔹 activity log: updated book
     await logActivity(req, {
       action: `Updated book "${
         oldTitle !== book.title ? `${oldTitle}" → "${book.title}` : book.title
@@ -264,7 +250,6 @@ const deleteBook = async (req, res) => {
 
     await book.deleteOne();
 
-    // 🔹 activity log: deleted book
     await logActivity(req, {
       action: `Deleted book "${title}"`,
       entityType: "Book",
@@ -286,29 +271,22 @@ const getReadableBook = async (req, res) => {
 
     console.log("getReadableBook called for", bookId, "by", userId);
 
-    const book = await Book.findById(bookId).populate(
-      "author",
-      "name email"
-    );
+    const book = await Book.findById(bookId).populate("author", "name email");
     if (!book) {
       return res.status(404).json({ message: "Book not found" });
     }
 
-    const isAuthor =
-      String(book.author._id || book.author) === String(userId);
+    const isAuthor = String(book.author._id || book.author) === String(userId);
     const isAdmin = userRole === "admin";
 
-    // Author can always read own book
     if (isAuthor) {
       return res.json({ canRead: true, reason: "author", book });
     }
 
-    // Admin can always read
     if (isAdmin) {
       return res.json({ canRead: true, reason: "admin", book });
     }
 
-    // If not published → only author/admin
     if (!book.published) {
       return res.status(403).json({
         canRead: false,
@@ -317,7 +295,6 @@ const getReadableBook = async (req, res) => {
       });
     }
 
-    // Check if user has paid order
     const paidOrder = await Order.findOne({
       book: bookId,
       buyer: userId,
@@ -328,12 +305,10 @@ const getReadableBook = async (req, res) => {
       return res.json({ canRead: true, reason: "purchased", book });
     }
 
-    // Free books
     if (!book.price || Number(book.price) === 0) {
       return res.json({ canRead: true, reason: "free", book });
     }
 
-    // Otherwise no access
     return res.status(403).json({
       canRead: false,
       reason: "not_purchased",

@@ -3,7 +3,6 @@ const sendMail = require("../config/sendMails");
 const bcrypt = require("bcrypt");
 const genToken = require("../config/token");
 
-
 const signup = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
@@ -37,7 +36,6 @@ const signup = async (req, res) => {
   }
 };
 
-
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -70,18 +68,13 @@ const login = async (req, res) => {
   }
 };
 
-
 const logOut = async (req, res) => {
   try {
-    
     return res.status(200).json({ message: "Logout Successfully" });
   } catch (error) {
-    return res
-      .status(500)
-      .json({ message: `Logout Error: ${error.message}` });
+    return res.status(500).json({ message: `Logout Error: ${error.message}` });
   }
 };
-
 
 const sendOtp = async (req, res) => {
   try {
@@ -99,7 +92,7 @@ const sendOtp = async (req, res) => {
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
 
     user.resetOtp = otp;
-    user.otpExpires = Date.now() + 5 * 60 * 1000; 
+    user.otpExpires = Date.now() + 5 * 60 * 1000;
     user.isOtpVerified = false;
 
     await user.save();
@@ -113,7 +106,6 @@ const sendOtp = async (req, res) => {
       .json({ message: `Send OTP error: ${error.message}` });
   }
 };
-
 
 const verifyOtp = async (req, res) => {
   try {
@@ -148,7 +140,6 @@ const verifyOtp = async (req, res) => {
       .json({ message: `Verify OTP error: ${error.message}` });
   }
 };
-
 
 const resetPassword = async (req, res) => {
   try {

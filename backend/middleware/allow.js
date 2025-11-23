@@ -1,4 +1,4 @@
-// returns a middleware
+
 module.exports = (...roles) => (req, res, next) => {
   try {
     if (!req.user || !roles.includes(req.user.role)) {

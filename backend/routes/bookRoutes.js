@@ -3,7 +3,7 @@ const express = require("express");
 const router = express.Router();
 
 const auth = require("../middleware/authMiddleware");
-const roles = require("../middleware/rolesMiddleware");           
+const roles = require("../middleware/rolesMiddleware");
 const { uploadCover, uploadFile } = require("../middleware/uploadMiddleware");
 
 const {
@@ -15,31 +15,27 @@ const {
   uploadBookCover,
   uploadBookFile,
   setPublish,
-  getReadableBook
+  getReadableBook,
 } = require("../controllers/bookController");
 
-// public
 router.get("/", getAllBooks);
 router.get("/mine", auth, async (req, res) => {
   const Book = require("../models/bookModel");
-  const books = await Book.find({ author: req.user.id }).sort({ createdAt: -1 });
+  const books = await Book.find({ author: req.user.id }).sort({
+    createdAt: -1,
+  });
   res.json(books);
 });
 router.get("/:id/read", auth, getReadableBook);
 router.get("/:id", getBookById);
 
-
-
-// authors/admins only
 router.post("/", auth, roles("author", "admin"), createBook);
 router.patch("/:id", auth, updateBook);
 router.delete("/:id", auth, deleteBook);
 
-// uploads
 router.patch("/:id/cover", auth, uploadCover, uploadBookCover);
-router.patch("/:id/file",  auth, uploadFile,  uploadBookFile);
+router.patch("/:id/file", auth, uploadFile, uploadBookFile);
 
-// publish toggle
 router.patch("/:id/publish", auth, setPublish);
 
 module.exports = router;
