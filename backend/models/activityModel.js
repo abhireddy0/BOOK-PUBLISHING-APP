@@ -1,4 +1,4 @@
-\// backend/models/activityLogModel.js
+// backend/models/activityLogModel.js
 const mongoose = require("mongoose");
 
 const activityLogSchema = new mongoose.Schema(
