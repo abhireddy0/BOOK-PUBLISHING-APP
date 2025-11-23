@@ -1,8 +1,9 @@
+// backend/controllers/paymentController.js
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
 
 const Order = require("../models/orderModel");
-const Book = require("../models/bookModel");
+// const Book  = require("../models/bookModel");
 
 const razor = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -40,7 +41,7 @@ async function initiateCheckout(req, res) {
     localOrder.providerOrderId = rzpOrder.id;
     await localOrder.save();
 
-    res.json({
+    return res.json({
       message: "Checkout initiated",
       razorpayKey: process.env.RAZORPAY_KEY_ID,
       amount: amountInPaise,
@@ -50,39 +51,46 @@ async function initiateCheckout(req, res) {
     });
   } catch (err) {
     console.error("initiateCheckout error:", err);
-    res.status(500).json({ message: "Failed to create checkout" });
+    return res.status(500).json({ message: "Failed to create checkout" });
   }
 }
 
 async function verifyPayment(req, res) {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, localOrderId } = req.body;
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      localOrderId,
+    } = req.body;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
       return res.status(400).json({ message: "Missing payment fields" });
     }
 
+    const toSign = `${razorpay_order_id}|${razorpay_payment_id}`;
     const expected = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .update(toSign)
       .digest("hex");
 
-    if (expected !== razorpay_signature)
+    if (expected !== razorpay_signature) {
       return res.status(400).json({ message: "Invalid payment signature" });
+    }
 
     const order = await Order.findById(localOrderId);
     if (!order) return res.status(404).json({ message: "Local order not found" });
 
     order.status = "paid";
     order.providerPaymentId = razorpay_payment_id;
-    order.providerOrderId = razorpay_order_id;
-    order.verifiedAt = new Date();
+    order.providerOrderId   = razorpay_order_id;
+    order.verifiedAt        = new Date();
     await order.save();
 
-    res.json({ message: "Payment verified", orderId: String(order._id) });
+    return res.json({ message: "Payment verified", orderId: String(order._id) });
   } catch (err) {
     console.error("verifyPayment error:", err);
-    res.status(500).json({ message: "Failed to verify payment" });
+    return res.status(500).json({ message: "Failed to verify payment" });
   }
 }
 
