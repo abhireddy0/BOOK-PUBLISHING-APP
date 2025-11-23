@@ -1,5 +1,5 @@
 // backend/utils/activityLogger.js
-const ActivityLog = require("../models/activityLogModel");
+const ActivityLog = require("../models/activityModel")
 
 /**
  * logActivity(req, {
