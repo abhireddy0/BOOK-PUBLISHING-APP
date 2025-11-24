@@ -3,7 +3,12 @@ const sendMail = require("../config/sendMails");
 const bcrypt = require("bcryptjs");
 const genToken = require("../config/token");
 
-// POST /auth/signup
+
+
+
+
+
+
 const signup = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
@@ -13,9 +18,11 @@ const signup = async (req, res) => {
     }
 
     const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
-    if (existingUser) return res.status(400).json({ message: "Email Already Registered" });
+    if (existingUser) {
+      return res.status(400).json({ message: "Email Already Registered" });
+    }
 
-    const hashPassword = await bcrypt.hash(String(password), 10);
+    const hashPassword = await bcrypt.hash(password, 10);
 
     const newUser = await User.create({
       name: name.trim(),
@@ -24,8 +31,12 @@ const signup = async (req, res) => {
       role: role === "author" ? "author" : "reader",
     });
 
+    
+    const token = genToken(newUser._id, newUser.role);
+
     return res.status(201).json({
       message: "Signup Successful",
+      token,
       user: {
         id: newUser._id,
         name: newUser.name,
@@ -39,7 +50,7 @@ const signup = async (req, res) => {
   }
 };
 
-// POST /auth/login
+
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -48,15 +59,16 @@ const login = async (req, res) => {
       return res.status(400).json({ message: "Email & password required" });
     }
 
-    // 🔴 IMPORTANT: include password (schema has select:false)
+    
     const user = await User.findOne({ email: email.toLowerCase().trim() }).select("+password");
     if (!user) return res.status(400).json({ message: "Invalid email or password" });
 
-    if (!user.password) {
-      return res.status(400).json({ message: "Account has no password set" });
+
+    if (typeof user.password !== "string" || !user.password.startsWith("$2")) {
+      return res.status(400).json({ message: "Account password not set correctly. Please reset your password." });
     }
 
-    const isMatch = await bcrypt.compare(String(password), String(user.password));
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: "Invalid email or password" });
 
     const token = genToken(user._id, user.role);
@@ -77,6 +89,12 @@ const login = async (req, res) => {
   }
 };
 
+
+
+
+
+
+
 const logOut = async (_req, res) => {
   try {
     return res.status(200).json({ message: "Logout Successfully" });
@@ -85,7 +103,7 @@ const logOut = async (_req, res) => {
   }
 };
 
-// POST /auth/send-otp
+
 const sendOtp = async (req, res) => {
   try {
     const { email } = req.body;
@@ -110,7 +128,7 @@ const sendOtp = async (req, res) => {
   }
 };
 
-// POST /auth/verify-otp
+
 const verifyOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
@@ -133,7 +151,7 @@ const verifyOtp = async (req, res) => {
   }
 };
 
-// POST /auth/reset-password
+
 const resetPassword = async (req, res) => {
   try {
     const { email, password } = req.body;
