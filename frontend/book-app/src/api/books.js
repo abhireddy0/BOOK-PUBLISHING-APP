@@ -13,7 +13,7 @@ export const createBookApi = async (payload, token) => {
     payload,
     authHeaders(token)
   );
-  return res.data; // { message, book }
+  return res.data; 
 };
 
 export const getBookByIdApi = async (bookId, token) => {

@@ -11,14 +11,13 @@ const uploadStream = (options, buffer) =>
     stream.end(buffer);
   });
 
-// GET /users/me
+
 exports.getMe = async (req, res) => {
   const me = await User.findById(req.user.id).select("-password");
   if (!me) return res.status(404).json({ message: "User not found" });
   res.json(me);
 };
 
-// PATCH /users/me (name, bio)
 exports.updateMe = async (req, res) => {
   const { name, bio } = req.body || {};
   const user = await User.findById(req.user.id).select("-password");
@@ -31,7 +30,7 @@ exports.updateMe = async (req, res) => {
   res.json({ message: "Profile updated", user });
 };
 
-// PATCH /users/me/password
+
 exports.updatePassword = async (req, res) => {
   const { currentPassword, newPassword } = req.body || {};
   if (!currentPassword || !newPassword) {
@@ -50,7 +49,7 @@ exports.updatePassword = async (req, res) => {
   res.json({ message: "Password changed" });
 };
 
-// PATCH /users/me/avatar  (form-data: avatar)
+
 exports.updateAvatar = async (req, res) => {
   if (!req.file) return res.status(400).json({ message: "No avatar file" });
 

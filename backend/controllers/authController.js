@@ -4,11 +4,6 @@ const bcrypt = require("bcryptjs");
 const genToken = require("../config/token");
 
 
-
-
-
-
-
 const signup = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;

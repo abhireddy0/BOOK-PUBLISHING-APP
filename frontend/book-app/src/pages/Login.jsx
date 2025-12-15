@@ -180,21 +180,10 @@ export default function Login() {
                 <h3 className="text-2xl sm:text-3xl font-semibold">
                   Good to see you again ✍️
                 </h3>
-                <p className="text-sm text-white/70">
-                  Pick up where you left off — manage your books, track sales,
-                  and discover new stories.
-                </p>
+               
 
                 <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-white/80">
-                  <span className="px-3 py-1 rounded-full bg-white/10 border border-white/20">
-                    🔒 Secure & private
-                  </span>
-                  <span className="px-3 py-1 rounded-full bg-white/10 border border-white/20">
-                    📊 Author dashboards
-                  </span>
-                  <span className="px-3 py-1 rounded-full bg-white/10 border border-white/20">
-                    📚 Personal library
-                  </span>
+              
                 </div>
               </div>
               <div className="hidden lg:flex justify-between items-center text-[11px] text-white/60 pt-4">

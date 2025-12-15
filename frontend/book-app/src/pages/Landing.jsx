@@ -1,8 +1,5 @@
-
-import React, { useEffect, useRef } from "react";
+import React, { useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import gsap from "gsap";
 import {
   FiBookOpen,
   FiPenTool,
@@ -13,78 +10,48 @@ import {
 
 export default function Landing() {
   const nav = useNavigate();
-  const heroRef = useRef(null);
-  const floatRef = useRef(null);
-
-  useEffect(() => {
-    if (!heroRef.current) return;
-
-    gsap.fromTo(
-      heroRef.current,
-      { opacity: 0, y: 30 },
-      { opacity: 1, y: 0, duration: 1.1, ease: "power3.out" }
-    );
-
-    if (floatRef.current) {
-      gsap.to(floatRef.current, {
-        y: -10,
-        duration: 2.5,
-        repeat: -1,
-        yoyo: true,
-        ease: "sine.inOut",
-      });
-    }
-  }, []);
+  const featuresRef = useRef(null);
 
   const scrollToFeatures = () => {
-    const el = document.getElementById("sv-features");
-    if (el) el.scrollIntoView({ behavior: "smooth" });
+    featuresRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-50 relative overflow-hidden">
-      
-      <div className="pointer-events-none fixed inset-0 opacity-50">
-        <div className="absolute -right-40 -top-20 h-72 w-72 rounded-full bg-sky-500/35 blur-3xl" />
-        <div className="absolute -left-32 bottom-0 h-80 w-80 rounded-full bg-purple-500/30 blur-3xl" />
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-50 overflow-hidden">
+      {/* background blobs */}
+      <div className="pointer-events-none fixed inset-0 opacity-40">
+        <div className="absolute -right-32 top-10 h-64 w-64 rounded-full bg-sky-500/30 blur-3xl" />
+        <div className="absolute -left-24 bottom-10 h-64 w-64 rounded-full bg-purple-500/25 blur-3xl" />
       </div>
 
-   
       <main className="relative z-10">
-   
-        <section className="max-w-7xl mx-auto px-4 pt-10 pb-12 md:pt-14 md:pb-16">
-          <div className="grid gap-10 lg:grid-cols-[1.5fr_1.2fr] items-center">
-     
-            <motion.div
-              ref={heroRef}
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-              className="space-y-6"
-            >
+        {/* HERO */}
+        <section className="max-w-6xl mx-auto px-4 py-12 sm:py-16 md:py-20">
+          <div className="grid gap-10 md:grid-cols-2 items-center">
+            {/* text */}
+            <div className="space-y-6 text-center md:text-left">
               <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3 py-1 text-[11px] text-emerald-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 Live digital publishing platform
               </div>
 
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-semibold leading-tight">
-                Read powerful stories.{" "}
+                Read powerful stories{" "}
                 <span className="bg-gradient-to-r from-sky-400 via-emerald-400 to-purple-400 bg-clip-text text-transparent">
-                  Publish your own.
+                  and publish your own.
                 </span>
               </h1>
 
-              <p className="text-sm md:text-base text-slate-300 max-w-xl">
+              <p className="text-sm md:text-base text-slate-300 max-w-md mx-auto md:mx-0">
                 StoryVerse is your all-in-one space to discover digital books,
-                publish your writing and earn from every reader with secure
+                publish your writing, and earn from every reader with secure
                 Razorpay payments.
               </p>
 
-        
-              <div className="flex flex-wrap gap-3 pt-2">
+              <div className="flex flex-col sm:flex-row justify-center md:justify-start gap-3 pt-2">
                 <button
                   onClick={() => nav("/books")}
-                  className="inline-flex items-center gap-2 h-11 px-5 rounded-xl bg-sky-500 text-slate-950 text-sm font-semibold hover:bg-sky-400 shadow-lg shadow-sky-500/30"
+                  className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl bg-sky-500 text-slate-950 text-sm font-semibold hover:bg-sky-400 shadow-lg shadow-sky-500/30 transition"
                 >
                   <FiBookOpen className="text-base" />
                   Start reading
@@ -93,31 +60,43 @@ export default function Landing() {
 
                 <button
                   onClick={() => nav("/signup")}
-                  className="inline-flex items-center gap-2 h-11 px-5 rounded-xl border border-slate-700 text-sm text-slate-100 hover:bg-slate-900"
+                  className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl border border-slate-700 text-sm text-slate-100 hover:bg-slate-900 transition"
                 >
                   <FiPenTool className="text-sm" />
                   Become an author
                 </button>
-              </div>
-            </motion.div>
 
-            <motion.div
-              ref={floatRef}
-              initial={{ opacity: 0, x: 40 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.9, ease: "easeOut", delay: 0.1 }}
-              className="relative"
-            >
+                <button
+                  onClick={scrollToFeatures}
+                  className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl text-sm text-slate-300 hover:text-white underline/50 hover:underline transition"
+                >
+                  See features
+                </button>
+              </div>
+            </div>
+
+            {/* simple image/quote side */}
+            <div className="relative hidden md:block">
               <div className="absolute -top-10 -right-8 h-32 w-32 rounded-full bg-sky-500/30 blur-3xl" />
               <div className="absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-purple-500/30 blur-3xl" />
-         
-            </motion.div>
+              <div className="relative rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+                <p className="text-slate-300 text-sm">
+                  “Publish drafts, set prices, and track sales — all in one
+                  clean dashboard.”
+                </p>
+                <div className="mt-4 h-32 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-800" />
+              </div>
+            </div>
           </div>
         </section>
 
-      
-        <section id="sv-features" className="max-w-7xl mx-auto px-4 pb-16">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-6">
+        {/* FEATURES */}
+        <section
+          id="sv-features"
+          ref={featuresRef}
+          className="max-w-6xl mx-auto px-4 pb-16"
+        >
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-6 text-center md:text-left">
             <div>
               <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">
                 Why StoryVerse
@@ -129,33 +108,33 @@ export default function Landing() {
 
             <button
               onClick={() => nav("/books")}
-              className="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-slate-700 text-xs text-slate-200 hover:bg-slate-900"
+              className="mt-4 md:mt-0 inline-flex items-center justify-center gap-2 h-9 px-3 rounded-lg border border-slate-700 text-xs text-slate-200 hover:bg-slate-900 transition"
             >
               Browse all books
               <FiArrowRight className="text-sm" />
             </button>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <FeatureCard
               icon={<FiBookOpen />}
               title="Discover digital books"
-              text="Search, filter and explore books in one clean reading experience."
+              text="Search, filter, and explore titles in a clean reading experience."
             />
             <FeatureCard
               icon={<FiPenTool />}
               title="Author studio"
-              text="Upload covers, set prices, publish drafts or live books easily."
+              text="Upload covers, set prices, and publish drafts or live books easily."
             />
             <FeatureCard
               icon={<FiShield />}
               title="Secure payments"
-              text="Razorpay handles all UPI & card payments with safety."
+              text="Razorpay handles UPI & cards with industry-standard safety."
             />
             <FeatureCard
               icon={<FiZap />}
               title="Fast UI"
-              text="Built with React, Tailwind, Framer Motion & GSAP."
+              text="Built with React + Tailwind for a smooth experience."
             />
           </div>
         </section>
@@ -166,16 +145,12 @@ export default function Landing() {
 
 function FeatureCard({ icon, title, text }) {
   return (
-    <motion.div
-      whileHover={{ y: -4, scale: 1.01 }}
-      transition={{ type: "spring", stiffness: 200, damping: 18 }}
-      className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4 flex flex-col gap-2"
-    >
+    <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4 flex flex-col items-center md:items-start gap-2 text-center md:text-left transition transform hover:-translate-y-1 hover:scale-[1.01]">
       <div className="h-8 w-8 rounded-lg bg-slate-800 flex items-center justify-center text-sky-400 text-lg">
         {icon}
       </div>
       <h3 className="text-sm font-semibold text-slate-50">{title}</h3>
       <p className="text-xs text-slate-400">{text}</p>
-    </motion.div>
+    </div>
   );
 }

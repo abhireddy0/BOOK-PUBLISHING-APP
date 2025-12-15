@@ -17,6 +17,8 @@ const {
   setPublish,
   getReadableBook,
 } = require("../controllers/bookController");
+const {streamBookFileInline}=require("../controllers/fileController")
+
 
 router.get("/", getAllBooks);
 router.get("/mine", auth, async (req, res) => {
@@ -32,6 +34,7 @@ router.get("/:id", getBookById);
 router.post("/", auth, roles("author", "admin"), createBook);
 router.patch("/:id", auth, updateBook);
 router.delete("/:id", auth, deleteBook);
+router.get("/read/:id", auth, streamBookFileInline);
 
 router.patch("/:id/cover", auth, uploadCover, uploadBookCover);
 router.patch("/:id/file", auth, uploadFile, uploadBookFile);

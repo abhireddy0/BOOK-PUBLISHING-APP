@@ -5,6 +5,6 @@ const upload = multer({
 });
 
 module.exports = {
-  uploadCover: upload.single("cover"), // field name 'cover'
-  uploadFile: upload.single("file")    // field name 'file'
+  uploadCover: upload.single("cover"), 
+  uploadFile: upload.single("file")   
 };

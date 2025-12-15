@@ -1,14 +1,11 @@
-// controllers/orderController.js
+
 const Order = require("../models/orderModel");
 const Book = require("../models/bookModel");
 
-/**
- * GET /orders/my
- * Return all PAID orders of the logged-in user
- */
+
 const getMyOrders = async (req, res) => {
   try {
-    const userId = req.user.id; // set by authMiddleware
+    const userId = req.user.id; 
 
     const orders = await Order.find({
       buyer: userId,
@@ -26,11 +23,7 @@ const getMyOrders = async (req, res) => {
   }
 };
 
-/**
- * GET /orders/:bookId/access
- * Check if the logged-in user has access to a specific book
- */
-// controllers/orderController.js
+
 const checkAccess = async (req, res) => {
   try {
     const userId = req.user.id;

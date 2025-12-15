@@ -1,224 +1,346 @@
 import React, { useEffect, useState } from "react";
+import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { toast } from "react-toastify";
 import { ClipLoader } from "react-spinners";
-import { FiAlertCircle, FiCheckCircle, FiBookOpen } from "react-icons/fi";
-import { getReadableBookApi } from "../api/books";
+import { toast } from "react-toastify";
+import { serverUrl } from "../config/server";
+import { FiBookOpen, FiShield, FiCheckCircle } from "react-icons/fi";
+import { FaPaypal } from "react-icons/fa";
+import ReviewsSection from "../components/ReviewSection";
 
-const showErrorToast = (message) =>
-  toast.error(
-    <div className="flex items-start gap-3">
-      <FiAlertCircle className="text-red-400 text-xl mt-0.5" />
-      <span className="text-white text-sm">{message}</span>
-    </div>,
-    { icon: false, theme: "dark" }
-  );
+export default function BookDetail() {
+  const { id } = useParams();
+  const { user, token } = useSelector((s) => s.user) || {};
 
-const showSuccessToast = (message) =>
-  toast.success(
-    <div className="flex items-start gap-3">
-      <FiCheckCircle className="text-emerald-400 text-xl mt-0.5" />
-      <span className="text-white text-sm">{message}</span>
-    </div>,
-    { icon: false, theme: "dark" }
-  );
-
-export default function BookReader() {
-  const { id: bookId } = useParams();
-  const nav = useNavigate();
-  const { token } = useSelector((state) => state.user) || {};
-
-  const [loading, setLoading] = useState(true);
   const [book, setBook] = useState(null);
-  const [reason, setReason] = useState("");
-  const [canRead, setCanRead] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [buying, setBuying] = useState(false);
+  const [hasAccess, setHasAccess] = useState(false);
 
+  const nav = useNavigate();
+  const finalToken = token || localStorage.getItem("token");
+  const isLoggedIn = !!finalToken;
+
+  // Author check uses _id on both sides (supports populated or plain id)
+  const isAuthor =
+    !!user && !!book && String(book.author?._id || book.author) === String(user?._id);
+
+  const isAdmin = user?.role === "admin";
+
+  // Load book
   useEffect(() => {
-    const fetchBook = async () => {
+    (async () => {
       try {
-        const finalToken = token || localStorage.getItem("token");
-        if (!finalToken) {
-          showErrorToast("You must be logged in to read this book.");
-          nav("/login");
-          return;
-        }
-
-        if (!bookId) {
-          showErrorToast("Invalid book URL. Book ID is missing.");
-          nav("/my-books");
-          return;
-        }
-
-        setLoading(true);
-        const data = await getReadableBookApi(bookId, finalToken);
-
-        setBook(data.book);
-        setCanRead(!!data.canRead);
-        setReason(data.reason);
-
-        if (data.reason === "author") {
-          showSuccessToast("You are viewing your own book as an author.");
-        }
+        const res = await axios.get(`${serverUrl}/books/${id}`);
+        setBook(res.data);
       } catch (err) {
-        const msg =
-          err?.response?.data?.message || "Unable to open this book right now.";
-        showErrorToast(msg);
+        console.error("Book fetch error:", err);
+        toast.error("Failed to load book");
       } finally {
         setLoading(false);
       }
+    })();
+  }, [id]);
+
+  // Check access (owned)
+  useEffect(() => {
+    const checkAccess = async () => {
+      if (!finalToken) {
+        setHasAccess(false);
+        return;
+      }
+      try {
+        const { data } = await axios.get(`${serverUrl}/orders/${id}/access`, {
+          headers: { Authorization: `Bearer ${finalToken}` },
+        });
+        setHasAccess(Boolean(data?.hasAccess));
+      } catch {
+        setHasAccess(false);
+      }
     };
+    checkAccess();
+  }, [id, finalToken]);
 
-    fetchBook();
-  }, [bookId]);
-
-  const handleOpenBook = () => {
-    if (!book?.fileUrl) {
-      showErrorToast("No book file found. Please upload a file for this book.");
+  const handleBuy = async () => {
+    if (!isLoggedIn) {
+      toast.info("Please login to purchase");
+      nav("/login");
       return;
     }
-    window.open(book.fileUrl, "_blank", "noopener,noreferrer");
-  };
+    if (isAuthor) {
+      toast.error("You cannot buy your own book");
+      return;
+    }
 
-  const handleBack = () => {
-    if (window.history.length > 2) {
-      nav(-1);
-    } else {
-      nav("/my-books");
+    try {
+      setBuying(true);
+
+      if (!window.Razorpay) {
+        toast.error("Razorpay SDK not loaded. Add it in public/index.html.");
+        setBuying(false);
+        return;
+      }
+
+      // 🔁 UPDATED: /payments prefix (matches your server.js mount)
+      const { data } = await axios.post(
+        `${serverUrl}/payments/checkout/${id}`,
+        {},
+        { headers: { Authorization: `Bearer ${finalToken}` } }
+      );
+
+      const rzp = new window.Razorpay({
+        key: data.razorpayKey,
+        amount: data.amount,
+        currency: data.currency,
+        name: "StoryVerse",
+        description: book.title,
+        image: book.coverImage || undefined,
+        order_id: data.razorpayOrderId,
+        handler: async (response) => {
+          try {
+            // 🔁 UPDATED: /payments prefix
+            const verifyRes = await axios.post(
+              `${serverUrl}/payments/verify`,
+              {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                localOrderId: data.localOrderId,
+                bookId: id,
+              },
+              { headers: { Authorization: `Bearer ${finalToken}` } }
+            );
+            toast.success(verifyRes.data?.message || "Payment successful ✅");
+            setHasAccess(true);
+          } catch (err) {
+            console.error("Verify error", err);
+            toast.error(err?.response?.data?.message || "Payment verification failed");
+          }
+        },
+        prefill: {
+          name: user?.name || "",
+          email: user?.email || "",
+        },
+        theme: { color: "#0f172a" },
+      });
+
+      rzp.open();
+    } catch (err) {
+      console.error("Checkout error", err);
+      const msg =
+        err?.response?.status === 404
+          ? "Payment route not found on server. Ensure backend mounts /payments and is the URL in serverUrl."
+          : err?.response?.data?.message || err?.message || "Failed to start checkout";
+      toast.error(msg);
+    } finally {
+      setBuying(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center px-4 py-10">
-      <div className="w-full max-w-5xl bg-slate-900/80 border border-slate-800 rounded-2xl shadow-[0_22px_60px_rgba(15,23,42,0.9)] backdrop-blur p-5 md:p-7 text-slate-50">
-        <div className="flex items-center justify-between mb-4 gap-3">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">
-              Book Reader
-            </p>
-            <h1 className="text-xl md:text-2xl font-semibold mt-1">
-              {book?.title || "Loading book..."}
-            </h1>
-            {book && (
-              <p className="text-xs text-slate-400 mt-1">
-                by{" "}
-                <span className="font-medium text-slate-100">
-                  {book.author?.name || "Unknown"}
-                </span>
-              </p>
-            )}
-          </div>
+  if (loading) {
+    return (
+      <div className="w-screen h-screen flex flex-col gap-3 items-center justify-center bg-slate-950 text-slate-100">
+        <ClipLoader size={40} />
+        <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+          Loading book&nbsp;details...
+        </p>
+      </div>
+    );
+  }
 
+  if (!book) {
+    return (
+      <div className="w-screen h-screen flex flex-col items-center justify-center bg-slate-950 text-slate-100 gap-3">
+        <p className="text-lg font-semibold">Book not found</p>
+        <button
+          onClick={() => nav("/")}
+          className="px-4 h-9 rounded-lg bg-slate-100 text-slate-900 text-sm"
+        >
+          Back to all books
+        </button>
+      </div>
+    );
+  }
+
+  const isPublished = !!book.published;
+  const canDownload = hasAccess || isAuthor || isAdmin;
+  const canBuy = isPublished && !canDownload && !isAuthor && (book.price ?? 0) > 0;
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-50">
+      <div className="max-w-6xl mx-auto px-4 py-8 md:py-10">
+        <div className="flex items-center justify-between gap-3 mb-6">
           <button
-            onClick={handleBack}
-            className="text-xs md:text-sm px-3 py-1.5 rounded-lg border border-slate-600 text-slate-200 hover:bg-slate-800 whitespace-nowrap"
+            onClick={() => nav(-1)}
+            className="inline-flex items-center gap-2 text-xs md:text-sm text-slate-300 hover:text-white transition"
           >
-            ← Back
+            <span className="text-lg">←</span>
+            Back to books
           </button>
+          <div className="flex items-center gap-2 text-[11px] md:text-xs text-slate-400">
+            <FiShield className="text-sm" />
+            <FaPaypal className="text-sky-400 text-base" />
+            <span>Secure payments powered by Razorpay</span>
+          </div>
         </div>
 
-        {loading ? (
-          <div className="w-full flex flex-col items-center justify-center py-16 gap-3">
-            <ClipLoader size={28} color="#e5e7eb" />
-            <p className="text-xs text-slate-400">Opening book...</p>
-          </div>
-        ) : !book ? (
-          <div className="w-full flex flex-col items-center justify-center py-16 gap-2">
-            <FiAlertCircle className="text-red-400 text-2xl" />
-            <p className="text-sm text-slate-300">
-              We couldn&apos;t find this book.
-            </p>
-          </div>
-        ) : !canRead ? (
-          <div className="w-full flex flex-col items-center justify-center py-16 gap-3 text-center">
-            <FiAlertCircle className="text-red-400 text-2xl" />
-            <p className="text-sm text-slate-200">
-              You don&apos;t have access to read this book.
-            </p>
-            <p className="text-xs text-slate-400 max-w-md">
-              {reason === "unpublished"
-                ? "This book is not published yet. Only the author and admins can view it."
-                : reason === "not_purchased"
-                ? "You need to purchase this book before you can read it."
-                : "Please check with the author or try again later."}
-            </p>
-          </div>
-        ) : (
-          <>
-            <div className="grid md:grid-cols-[1.4fr_1fr] gap-6">
-              <div className="space-y-3">
-                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[11px] text-emerald-200">
-                  <FiBookOpen className="text-xs" />
-                  {reason === "author"
-                    ? "Author view – you can read your own book for free."
-                    : reason === "admin"
-                    ? "Admin view – full access."
-                    : reason === "purchased"
-                    ? "You purchased this book."
-                    : "This is a free book."}
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(260px,1fr)]">
+          <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-5 md:p-7 shadow-[0_18px_50px_rgba(15,23,42,0.75)] backdrop-blur">
+            <div className="flex flex-col md:flex-row gap-6">
+              <div className="w-full md:w-1/3 flex justify-center">
+                <div className="w-full max-w-xs relative">
+                  <div className="absolute -inset-2 rounded-2xl bg-gradient-to-br from-sky-500/20 via-emerald-500/10 to-purple-500/20 blur-2xl opacity-60" />
+                  <div className="relative rounded-2xl overflow-hidden border border-slate-800 bg-slate-950/80">
+                    {book.coverImage ? (
+                      <img
+                        src={book.coverImage}
+                        alt={book.title}
+                        className="w-full h-full max-h-[380px] object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-[280px] flex flex-col items-center justify-center text-slate-500 text-xs gap-2">
+                        <FiBookOpen className="text-2xl" />
+                        <span>No cover image</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex-1 flex flex-col gap-4">
+                <div>
+                  <div className="flex flex-wrap items-center gap-3 mb-2">
+                    <p className="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.2em] text-emerald-300">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      StoryVerse Original
+                    </p>
+                    {canDownload && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-sky-500/15 text-sky-200 border border-sky-500/40 px-3 py-1 text-[10px] font-medium">
+                        <FiCheckCircle className="text-xs" />
+                        Owned
+                      </span>
+                    )}
+                  </div>
+
+                  <h1 className="text-2xl md:text-3xl font-semibold text-slate-50 leading-snug">
+                    {book.title}
+                  </h1>
+                  <p className="text-xs md:text-sm text-slate-400 mt-1">
+                    by{" "}
+                    <span className="font-medium text-slate-200">
+                      {book.author?.name || "Unknown author"}
+                    </span>
+                  </p>
                 </div>
 
-                <p className="text-sm text-slate-300 leading-relaxed">
-                  {book.description ||
-                    "No description provided. You can update the description from the My Books section."}
-                </p>
+                <div className="mt-2">
+                  <p className="text-sm md:text-[0.95rem] text-slate-200/90 leading-relaxed">
+                    {book.description || "No description provided."}
+                  </p>
+                </div>
 
-                <div className="flex items-center gap-4 text-xs text-slate-400">
-                  <span>
-                    Status:{" "}
+                <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-3 text-[11px] md:text-xs text-slate-400">
+                  <div className="flex flex-col gap-1">
+                    <span className="uppercase tracking-[0.18em] text-[9px] text-slate-500">
+                      Status
+                    </span>
                     <span
                       className={
-                        book.published
-                          ? "text-emerald-300 font-medium"
-                          : "text-yellow-300 font-medium"
+                        isPublished
+                          ? "inline-flex items-center gap-1 text-emerald-300"
+                          : "inline-flex items-center gap-1 text-amber-300"
                       }
                     >
-                      {book.published ? "Published" : "Draft"}
+                      <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                      {isPublished ? "Published" : "Unpublished draft"}
                     </span>
-                  </span>
-                  <span>
-                    Price:{" "}
-                    <span className="text-slate-100 font-medium">
-                      {book.price && Number(book.price) > 0
-                        ? `₹${book.price}`
-                        : "Free"}
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <span className="uppercase tracking-[0.18em] text-[9px] text-slate-500">
+                      Price
                     </span>
-                  </span>
+                    <span className="text-slate-100 font-semibold">
+                      ₹{book.price ?? 0}
+                    </span>
+                  </div>
+                </div>
+
+                {canDownload && book.fileUrl && (
+                  <div className="mt-3">
+                    <a
+                      href={book.fileUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-sky-500/60 bg-sky-500/10 px-4 py-2 text-xs md:text-sm font-medium text-sky-100 hover:bg-sky-500/20 transition"
+                    >
+                      <FiBookOpen className="text-sm" />
+                      Read / Download book
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <aside className="lg:sticky lg:top-8 h-fit">
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/80 px-5 py-5 shadow-[0_18px_45px_rgba(15,23,42,0.8)] backdrop-blur">
+              <div className="flex items-baseline justify-between mb-3">
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500 mb-1">
+                    Get instant access
+                  </p>
+                  <p className="text-2xl font-semibold text-slate-50">
+                    ₹{book.price ?? 0}
+                  </p>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    One-time payment • Lifetime reading access
+                  </p>
                 </div>
               </div>
 
-              <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-3 text-[11px] text-slate-400 space-y-2">
-                <p className="font-medium text-slate-100">
-                  How reading works for authors
-                </p>
-                <p>
-                  • As the author, you can open and read your own book in full
-                  without purchasing it.
-                </p>
-                <p>
-                  • Readers must purchase paid books before reading, but free
-                  books are instantly accessible.
-                </p>
-              </div>
-            </div>
+              {canBuy && (
+                <button
+                  onClick={handleBuy}
+                  disabled={buying}
+                  className="mt-1 inline-flex w-full items-center justify-center rounded-xl bg-sky-500 text-slate-950 text-xs md:text-sm font-semibold h-11 hover:bg-sky-400 disabled:opacity-60 transition shadow-lg shadow-sky-500/30"
+                >
+                  {buying ? "Processing payment..." : "Buy securely with Razorpay"}
+                </button>
+              )}
 
-            <div className="mt-6 flex flex-col items-center gap-3">
-              <button
-                onClick={handleOpenBook}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-sky-500 text-slate-950 text-sm font-semibold hover:bg-sky-400 shadow-lg shadow-sky-500/30"
-              >
-                <FiBookOpen className="text-base" />
-                Open book in new tab
-              </button>
-              {!book.fileUrl && (
-                <p className="text-[11px] text-red-300">
-                  No file uploaded yet. Go to My Books → Edit and upload a PDF
-                  or EPUB.
+              {canDownload && book.fileUrl && (
+                <a
+                  href={book.fileUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2 inline-flex w-full items-center justify-center rounded-xl bg-emerald-500 text-slate-950 text-xs md:text-sm font-semibold h-11 hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/30"
+                >
+                  Start reading now
+                </a>
+              )}
+
+              {!isPublished && (
+                <p className="mt-3 text-amber-300 text-[11px]">
+                  This book is currently <span className="font-semibold">not published</span>.
+                  Readers can’t purchase it yet.
                 </p>
               )}
+
+              <div className="mt-5 pt-4 border-t border-slate-800/80 text-[10px] text-slate-500 space-y-1.5">
+                <p className="flex items-center gap-1">
+                  <FiShield className="text-xs" />
+                  <FaPaypal className="text-sky-400 text-sm" />
+                  <span>Card / UPI handled by Razorpay. We don’t store your payment details.</span>
+                </p>
+                <p>📚 Access is tied to your StoryVerse account.</p>
+              </div>
             </div>
-          </>
-        )}
+          </aside>
+        </div>
+
+        <ReviewsSection bookId={id} />
       </div>
     </div>
   );

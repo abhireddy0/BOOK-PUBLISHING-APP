@@ -20,18 +20,23 @@ export default function BookDetail() {
 
   const nav = useNavigate();
   const finalToken = token || localStorage.getItem("token");
-
   const isLoggedIn = !!finalToken;
 
-  const isAuthor =
-    !!user &&
-    !!book &&
-    String(book.author?._id || book.author) === String(user.id);
+  // --- Helpers
+  const authHeader = finalToken ? { Authorization: `Bearer ${finalToken}` } : undefined;
 
+  // Normalize ids safely
+  const authorId =
+    typeof book?.author === "string" ? book?.author : book?.author?._id || null;
+  const userId = user?._id || null;
+
+  // FIX: only true when both ids exist and match
+  const isAuthor = Boolean(authorId && userId && String(authorId) === String(userId));
   const isAdmin = user?.role === "admin";
 
+  // Load book
   useEffect(() => {
-    const fetchBook = async () => {
+    (async () => {
       try {
         const res = await axios.get(`${serverUrl}/books/${id}`);
         setBook(res.data);
@@ -41,24 +46,24 @@ export default function BookDetail() {
       } finally {
         setLoading(false);
       }
-    };
-    fetchBook();
+    })();
   }, [id]);
 
+  // Check access (ownership)
   useEffect(() => {
     const checkAccess = async () => {
-      if (!finalToken) return;
+      if (!finalToken) return setHasAccess(false);
       try {
-        const res = await axios.get(`${serverUrl}/orders/${id}/access`, {
-          headers: { Authorization: `Bearer ${finalToken}` },
+        const { data } = await axios.get(`${serverUrl}/orders/${id}/access`, {
+          headers: authHeader,
         });
-        if (res.data?.hasAccess || res.status === 200) setHasAccess(true);
+        setHasAccess(Boolean(data?.hasAccess));
       } catch {
         setHasAccess(false);
       }
     };
-    if (isLoggedIn) checkAccess();
-  }, [id, finalToken, isLoggedIn]);
+    checkAccess();
+  }, [id, finalToken]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleBuy = async () => {
     if (!isLoggedIn) {
@@ -70,34 +75,34 @@ export default function BookDetail() {
       toast.error("You cannot buy your own book");
       return;
     }
+
     try {
       setBuying(true);
 
       if (!window.Razorpay) {
-        toast.error("Razorpay SDK not loaded. Check index.html.");
-        setBuying(false);
+        toast.error("Razorpay SDK not loaded. Add it in public/index.html.");
         return;
       }
 
-      const checkoutRes = await axios.post(
-        `${serverUrl}/pay/checkout/${id}`,
+      // Create order on backend
+      const { data } = await axios.post(
+        `${serverUrl}/payments/checkout/${id}`,
         {},
-        { headers: { Authorization: `Bearer ${finalToken}` } }
+        { headers: authHeader }
       );
-      const data = checkoutRes.data;
 
       const rzp = new window.Razorpay({
         key: data.razorpayKey,
         amount: data.amount,
         currency: data.currency,
         name: "StoryVerse",
-        description: book.title,
-        image: book.coverImage || undefined,
+        description: book?.title,
+        image: book?.coverImage || undefined,
         order_id: data.razorpayOrderId,
         handler: async (response) => {
           try {
             const verifyRes = await axios.post(
-              `${serverUrl}/pay/verify`,
+              `${serverUrl}/payments/verify`,
               {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
@@ -105,7 +110,7 @@ export default function BookDetail() {
                 localOrderId: data.localOrderId,
                 bookId: id,
               },
-              { headers: { Authorization: `Bearer ${finalToken}` } }
+              { headers: authHeader }
             );
             toast.success(verifyRes.data?.message || "Payment successful ✅");
             setHasAccess(true);
@@ -116,21 +121,20 @@ export default function BookDetail() {
             );
           }
         },
-        prefill: {
-          name: user?.name || "",
-          email: user?.email || "",
-        },
+        prefill: { name: user?.name || "", email: user?.email || "" },
         theme: { color: "#0f172a" },
       });
 
       rzp.open();
     } catch (err) {
       console.error("Checkout error", err);
-      toast.error(
-        err?.response?.data?.message ||
-          err?.message ||
-          "Failed to start checkout"
-      );
+      const msg =
+        err?.response?.status === 404
+          ? "Payment route not found on server. Ensure backend mounts /payments and serverUrl points to the API."
+          : err?.response?.data?.message ||
+            err?.message ||
+            "Failed to start checkout";
+      toast.error(msg);
     } finally {
       setBuying(false);
     }
@@ -161,8 +165,10 @@ export default function BookDetail() {
     );
   }
 
-  const canDownload = hasAccess || isAuthor || isAdmin;
   const isPublished = !!book.published;
+  const canDownload = hasAccess || isAuthor || isAdmin;
+  const canBuy =
+    isPublished && !canDownload && !isAuthor && Number(book.price ?? 0) > 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-50">
@@ -212,20 +218,24 @@ export default function BookDetail() {
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                       StoryVerse Original
                     </p>
-                    {canDownload && (
+
+                    {/* Badges separated for clarity */}
+                    {hasAccess && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-sky-500/15 text-sky-200 border border-sky-500/40 px-3 py-1 text-[10px] font-medium">
                         <FiCheckCircle className="text-xs" />
                         Owned
                       </span>
                     )}
-                    {isAuthor && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/20 text-purple-200 border border-purple-500/40 px-3 py-1 text-[10px] font-medium">
-                        Author
+                    {!hasAccess && isAuthor && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/15 text-purple-200 border border-purple-500/40 px-3 py-1 text-[10px] font-medium">
+                        <FiCheckCircle className="text-xs" />
+                        You’re the author
                       </span>
                     )}
-                    {isAdmin && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 text-amber-100 border border-amber-500/40 px-3 py-1 text-[10px] font-medium">
-                        Admin
+                    {!hasAccess && !isAuthor && isAdmin && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 text-amber-200 border border-amber-500/40 px-3 py-1 text-[10px] font-medium">
+                        <FiCheckCircle className="text-xs" />
+                        Admin access
                       </span>
                     )}
                   </div>
@@ -254,13 +264,13 @@ export default function BookDetail() {
                     </span>
                     <span
                       className={
-                        book.published
+                        isPublished
                           ? "inline-flex items-center gap-1 text-emerald-300"
                           : "inline-flex items-center gap-1 text-amber-300"
                       }
                     >
                       <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                      {book.published ? "Published" : "Unpublished draft"}
+                      {isPublished ? "Published" : "Unpublished draft"}
                     </span>
                   </div>
 
@@ -274,10 +284,11 @@ export default function BookDetail() {
                   </div>
                 </div>
 
-                {canDownload && book.fileUrl && (
+                {/* Use protected backend stream for read/download */}
+                {canDownload && (
                   <div className="mt-3">
                     <a
-                      href={book.fileUrl}
+                      href={`${serverUrl}/books/read/${book._id}`}
                       target="_blank"
                       rel="noreferrer"
                       className="inline-flex items-center justify-center gap-2 rounded-xl border border-sky-500/60 bg-sky-500/10 px-4 py-2 text-xs md:text-sm font-medium text-sky-100 hover:bg-sky-500/20 transition"
@@ -307,21 +318,19 @@ export default function BookDetail() {
                 </div>
               </div>
 
-              {!isAuthor && !canDownload && book.published && (
+              {canBuy && (
                 <button
                   onClick={handleBuy}
                   disabled={buying}
                   className="mt-1 inline-flex w-full items-center justify-center rounded-xl bg-sky-500 text-slate-950 text-xs md:text-sm font-semibold h-11 hover:bg-sky-400 disabled:opacity-60 transition shadow-lg shadow-sky-500/30"
                 >
-                  {buying
-                    ? "Processing payment..."
-                    : "Buy securely with Razorpay"}
+                  {buying ? "Processing payment..." : "Buy securely with Razorpay"}
                 </button>
               )}
 
-              {canDownload && book.fileUrl && (
+              {canDownload && (
                 <a
-                  href={book.fileUrl}
+                  href={`${serverUrl}/books/read/${book._id}`}
                   target="_blank"
                   rel="noreferrer"
                   className="mt-2 inline-flex w-full items-center justify-center rounded-xl bg-emerald-500 text-slate-950 text-xs md:text-sm font-semibold h-11 hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/30"
@@ -330,11 +339,10 @@ export default function BookDetail() {
                 </a>
               )}
 
-              {!book.published && (
+              {!isPublished && (
                 <p className="mt-3 text-amber-300 text-[11px]">
-                  This book is currently{" "}
-                  <span className="font-semibold">not published</span>. Readers
-                  can’t purchase it yet.
+                  This book is currently <span className="font-semibold">not published</span>.
+                  Readers can’t purchase it yet.
                 </p>
               )}
 
@@ -342,10 +350,7 @@ export default function BookDetail() {
                 <p className="flex items-center gap-1">
                   <FiShield className="text-xs" />
                   <FaPaypal className="text-sky-400 text-sm" />
-                  <span>
-                    Card / UPI handled by Razorpay. We don’t store your payment
-                    details.
-                  </span>
+                  <span>Card / UPI handled by Razorpay. We don’t store your payment details.</span>
                 </p>
                 <p>📚 Access is tied to your StoryVerse account.</p>
               </div>
