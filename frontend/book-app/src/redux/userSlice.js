@@ -1,9 +1,13 @@
 
 import { createSlice } from "@reduxjs/toolkit";
 
+// Initialize from localStorage to persist across page refreshes
+const storedAuth = JSON.parse(localStorage.getItem("storyverse_auth") || "null");
+const storedToken = localStorage.getItem("token");
+
 const initial = {
-  user: null,
-  token: null,
+  user: storedAuth?.user || null,
+  token: storedAuth?.token || storedToken || null,
 };
 
 const userSlice = createSlice({

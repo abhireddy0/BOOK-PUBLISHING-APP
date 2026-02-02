@@ -267,10 +267,10 @@ export default function BookDetail() {
                   </div>
                 </div>
 
-                {canDownload && book.fileUrl && (
+                {canDownload && (
                   <div className="mt-3">
                     <a
-                      href={book.fileUrl}
+                      href={`${serverUrl}/books/read/${book._id}?token=${finalToken}`}
                       target="_blank"
                       rel="noreferrer"
                       className="inline-flex items-center justify-center gap-2 rounded-xl border border-sky-500/60 bg-sky-500/10 px-4 py-2 text-xs md:text-sm font-medium text-sky-100 hover:bg-sky-500/20 transition"
@@ -310,9 +310,9 @@ export default function BookDetail() {
                 </button>
               )}
 
-              {canDownload && book.fileUrl && (
+              {canDownload && (
                 <a
-                  href={book.fileUrl}
+                  href={`${serverUrl}/books/read/${book._id}?token=${finalToken}`}
                   target="_blank"
                   rel="noreferrer"
                   className="mt-2 inline-flex w-full items-center justify-center rounded-xl bg-emerald-500 text-slate-950 text-xs md:text-sm font-semibold h-11 hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/30"
