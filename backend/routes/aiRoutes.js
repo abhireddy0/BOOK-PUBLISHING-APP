@@ -8,30 +8,40 @@ router.post("/chat", auth, async (req, res) => {
     const { prompt } = req.body || {};
     if (!prompt) return res.status(400).json({ message: "prompt required" });
 
-    const url =
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" +
-      process.env.GEMINI_API_KEY;
+    // Check if OpenAI API key exists
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(500).json({ message: "OpenAI API key not configured" });
+    }
+
+    const url = "https://api.openai.com/v1/chat/completions";
 
     const resp = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
+      },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
+        model: "gpt-3.5-turbo",
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 1000,
+        temperature: 0.7
       }),
     });
 
     if (!resp.ok) {
       const text = await resp.text();
-      return res.status(500).json({ message: text });
+      console.error("[AI] OpenAI error:", text);
+      return res.status(500).json({ message: "AI service error", detail: text });
     }
 
     const json = await resp.json();
-    const reply =
-      json?.candidates?.[0]?.content?.parts?.[0]?.text || "no reply generated";
+    const reply = json?.choices?.[0]?.message?.content || "no reply generated";
 
     res.json({ ok: true, reply });
   } catch (e) {
-    res.status(500).json({ message: "gemini error", detail: e.message });
+    console.error("[AI] Error:", e.message);
+    res.status(500).json({ message: "AI error", detail: e.message });
   }
 });
 
