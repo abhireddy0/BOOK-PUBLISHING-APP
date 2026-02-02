@@ -20,7 +20,7 @@
     "crypto": "^1.0.1",
     "debug": "^4.4.3",
     "dotenv": "^17.2.3",
-    "express": "^4.19.2",
+    "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
     "helmet": "^8.1.0",
     "joi": "^18.0.1",
@@ -30,6 +30,7 @@
     "multer": "^2.0.2",
     "node-fetch": "^2.7.0",
     "nodemailer": "^7.0.10",
+    "path-to-regexp": "^8.3.0",
     "razorpay": "^2.9.6"
   },
   "devDependencies": {
