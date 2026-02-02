@@ -116,6 +116,7 @@ const setPublish = async (req, res) => {
     }
 
     book.published = published;
+    book.status = published ? 'published' : 'draft'; // Sync status field
     await book.save();
 
     await logActivity(req, {
@@ -211,7 +212,10 @@ const updateBook = async (req, res) => {
     if (description !== undefined) book.description = description;
     if (tags !== undefined) book.tags = Array.isArray(tags) ? tags : [tags];
     if (price !== undefined) book.price = price;
-    if (published !== undefined) book.published = published;
+    if (published !== undefined) {
+      book.published = published;
+      book.status = published ? 'published' : 'draft'; // Sync status field
+    }
 
     await book.save();
 
