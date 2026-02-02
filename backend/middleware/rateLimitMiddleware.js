@@ -1,41 +1,53 @@
-const rateLimit = require('express-rate-limit');
+const rateLimit = require("express-rate-limit");
+const { ipKeyGenerator } = require("express-rate-limit");
 
-// Email-based key generator for OTP rate limiting
+// Email-based key generator (IPv6-safe fallback)
 const otpKeyGenerator = (req) => {
   const email = req.body?.email?.toLowerCase().trim();
-  return email || req.ip; // fallback to IP if email missing
+
+  // Prefer email-based limiting
+  if (email) return email;
+
+  // Safe fallback for IPv4 + IPv6 + proxies
+  return ipKeyGenerator(req);
 };
 
-// Email-based rate limit for OTP sending (max 5 per 15 minutes per email)
+// OTP send limiter (5 OTPs per 15 minutes per email/IP)
 const otpSendLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // increased from 3
+  windowMs: 15 * 60 * 1000,
+  max: 5,
   keyGenerator: otpKeyGenerator,
-  skipSuccessfulRequests: true, // only count failed requests
+  skipSuccessfulRequests: true,
   message: {
-    message: 'Too many OTP requests for this email. Please try again in 15 minutes.',
-    retryAfter: 15
+    message:
+      "Too many OTP requests for this email. Please try again in 15 minutes.",
+    retryAfter: 15,
   },
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-// Moderate rate limit for OTP verification (max 5 attempts per 15 minutes)
+// OTP verify limiter (5 attempts per 15 minutes per IP)
 const otpVerifyLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
-  message: { message: 'Too many verification attempts. Please request a new OTP.' },
   standardHeaders: true,
   legacyHeaders: false,
+  message: {
+    message: "Too many verification attempts. Please request a new OTP.",
+  },
 });
 
-// Standard rate limit for password reset (max 3 per hour)
+// Password reset limiter (3 per hour per IP)
 const passwordResetLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 3,
-  message: { message: 'Too many password reset attempts. Please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
+  message: {
+    message:
+      "Too many password reset attempts. Please try again later.",
+  },
 });
 
 module.exports = {
