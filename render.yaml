@@ -27,13 +27,7 @@ services:
         value: https://book-publishing-app-ui.vercel.app
       - key: OPENAI_API_KEY
         sync: false  # Set in Render dashboard (secret)
-      - key: BREVO_SMTP_HOST
-        value: smtp-relay.brevo.com
-      - key: BREVO_SMTP_PORT
-        value: 587
-      - key: BREVO_SMTP_USER
-        sync: false  # Set in Render dashboard (secret)
-      - key: BREVO_SMTP_PASS
+      - key: BREVO_API_KEY
         sync: false  # Set in Render dashboard (secret)
       - key: FROM_EMAIL
         value: abhishekreddy87988@gmail.com
