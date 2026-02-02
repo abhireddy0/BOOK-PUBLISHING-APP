@@ -24,7 +24,7 @@ services:
       - key: RAZORPAY_KEY_SECRET
         sync: false  # Set in Render dashboard (secret)
       - key: CLIENT_URL
-        value: https://book-publishing-app-11.onrender.com
+        value: https://book-publishing-app-ui.vercel.app
       - key: GEMINI_API_KEY
         sync: false  # Set in Render dashboard (secret)
       - key: EMAIL
