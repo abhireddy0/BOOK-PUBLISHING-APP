@@ -1,8 +1,9 @@
 const express = require("express");
 const fetch = require("node-fetch");
 const router = express.Router();
+const auth = require("../middleware/authMiddleware");
 
-router.post("/chat", async (req, res) => {
+router.post("/chat", auth, async (req, res) => {
   try {
     const { prompt } = req.body || {};
     if (!prompt) return res.status(400).json({ message: "prompt required" });

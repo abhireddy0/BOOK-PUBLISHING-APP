@@ -164,8 +164,8 @@ export default function ForgotPassword() {
                     Step 2 — Verify OTP
                   </p>
                   <p className="text-slate-400">
-                    Enter the 4-digit OTP from your email. If it expires or you
-                    didn’t receive it, you can resend a new code.
+                    Enter the 6-digit OTP from your email. If it expires or you
+                    didn't receive it, you can resend a new code.
                   </p>
                 </div>
               </div>
@@ -281,12 +281,12 @@ export default function ForgotPassword() {
                     type="text"
                     maxLength={6}
                     className="border border-neutral-700 bg-neutral-900/80 rounded-lg px-3 py-2 text-sm text-slate-100 outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 placeholder:text-slate-500 tracking-[0.35em] text-center"
-                    placeholder="••••"
+                    placeholder="••••••"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
                   />
                   <p className="text-[10px] text-slate-500 mt-0.5">
-                    Check your inbox and spam folder for the 4-digit code.
+                    Check your inbox and spam folder for the 6-digit code.
                   </p>
                 </div>
 

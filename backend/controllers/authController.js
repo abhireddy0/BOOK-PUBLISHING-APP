@@ -107,7 +107,7 @@ const sendOtp = async (req, res) => {
     const user = await User.findOne({ email: email.toLowerCase().trim() });
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     user.resetOtp = otp;
     user.otpExpires = Date.now() + 5 * 60 * 1000;

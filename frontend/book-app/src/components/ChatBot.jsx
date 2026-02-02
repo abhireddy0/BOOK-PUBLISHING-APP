@@ -59,11 +59,31 @@ User question: ${trimmed}
       setMessages((prev) => [...prev, botMsg]);
     } catch (err) {
       console.error("AI error:", err);
+
+      let errorMessage = "Oops, I had trouble talking to the AI right now. Please try again in a few seconds 🙏";
+
+      if (err.response) {
+        const statusCode = err.response.status;
+        const serverMessage = err.response.data?.message;
+
+        if (statusCode === 401) {
+          errorMessage = "Your session has expired. Please log in again to use the chatbot.";
+        } else if (statusCode === 429) {
+          errorMessage = "Too many requests. Please wait a moment and try again.";
+        } else if (statusCode === 500 && serverMessage) {
+          errorMessage = `AI service error: ${serverMessage}`;
+        } else if (serverMessage) {
+          errorMessage = serverMessage;
+        }
+      } else if (err.request) {
+        errorMessage = "Cannot reach the server. Please check your internet connection.";
+      }
+
       setMessages((prev) => [
         ...prev,
         {
           from: "bot",
-          text: "Oops, I had trouble talking to the AI right now. Please try again in a few seconds 🙏",
+          text: errorMessage,
         },
       ]);
     } finally {
@@ -94,7 +114,7 @@ User question: ${trimmed}
     <>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="fixed bottom-5 right-5 h-11 w-11 rounded-full bg-slate-900 text-white shadow-lg flex items-center justify-center text-xl z-40 hover:bg-slate-800 active:scale-95 transition"
+        className="fixed bottom-5 right-5 h-11 w-11 rounded-full bg-sky-500 text-white shadow-lg shadow-sky-500/30 flex items-center justify-center text-xl z-40 hover:bg-sky-400 active:scale-95 transition"
         aria-label="Open StoryVerse assistant"
       >
         💬
@@ -102,16 +122,16 @@ User question: ${trimmed}
 
       {open && (
         <div className="fixed bottom-20 right-5 w-80 h-96 bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden z-40">
-          <div className="px-4 py-3 bg-slate-900 text-white flex items-center justify-between">
+          <div className="px-4 py-3 bg-sky-500 text-white flex items-center justify-between">
             <div>
               <p className="text-sm font-semibold">StoryVerse Assistant</p>
-              <p className="text-[11px] text-slate-200">
+              <p className="text-[11px] text-sky-100">
                 Ask anything about publishing or reading here.
               </p>
             </div>
             <button
               onClick={() => setOpen(false)}
-              className="text-sm text-slate-200 hover:text-white"
+              className="text-sm text-sky-100 hover:text-white"
             >
               ✕
             </button>
@@ -127,7 +147,7 @@ User question: ${trimmed}
                   className={
                     "inline-block rounded-2xl px-3 py-2 text-xs max-w-[90%] leading-relaxed " +
                     (m.from === "user"
-                      ? "bg-slate-900 text-white"
+                      ? "bg-sky-500 text-white"
                       : "bg-white text-slate-900 border border-slate-200")
                   }
                 >
@@ -147,12 +167,12 @@ User question: ${trimmed}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Ask how to publish, price, or buy a book…"
-              className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1.5 resize-none outline-none focus:ring-1 focus:ring-slate-900"
+              className="w-full text-xs border border-slate-300 rounded-lg px-2 py-1.5 resize-none outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500"
             />
             <button
               onClick={sendMessage}
               disabled={loading || !input.trim()}
-              className="mt-1 w-full h-8 rounded-lg bg-slate-900 text-white text-xs font-medium disabled:opacity-60"
+              className="mt-1 w-full h-8 rounded-lg bg-sky-500 text-white text-xs font-medium hover:bg-sky-400 disabled:opacity-60 shadow-lg shadow-sky-500/30 transition"
             >
               {loading ? "Sending…" : "Send"}
             </button>

@@ -16,10 +16,14 @@ function buildTransporter({ port, secure }) {
   });
 }
 
-async function trySend(transporter, mail) {
+async function trySend(transporter, mail, portInfo) {
   try {
-    return await transporter.sendMail(mail);
+    console.log(`[Email] Attempting to send via ${portInfo}...`);
+    const result = await transporter.sendMail(mail);
+    console.log(`[Email] ✓ Successfully sent via ${portInfo} to ${mail.to}`);
+    return result;
   } catch (err) {
+    console.error(`[Email] ✗ Failed on ${portInfo}:`, err.message);
     const hint = err?.response?.includes("535")
       ? "Gmail says credentials not accepted. Use a 16-char App Password, ensure 'from' equals EMAIL, and run DisplayUnlockCaptcha once."
       : "";
@@ -40,10 +44,10 @@ async function sendMail(to, otp) {
   };
   const t465 = buildTransporter({ port: 465, secure: true });
   try {
-    return await trySend(t465, mail);
+    return await trySend(t465, mail, "port 465 (SSL)");
   } catch (e465) {
     const t587 = buildTransporter({ port: 587, secure: false });
-    return await trySend(t587, mail);
+    return await trySend(t587, mail, "port 587 (STARTTLS)");
   }
 }
 

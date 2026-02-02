@@ -1,9 +1,8 @@
 
-import axios from "axios";
-import { serverUrl } from "../config/server";
+import { api } from "./axios";
 
 export async function askAi(prompt) {
-  const res = await axios.post(`${serverUrl}/gemini/chat`, { prompt });
+  const res = await api.post("/gemini/chat", { prompt });
 
   return res.data;
 }
