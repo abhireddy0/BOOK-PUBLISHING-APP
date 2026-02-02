@@ -15,10 +15,22 @@ const userSlice = createSlice({
   initialState: initial,
   reducers: {
     setUserData: (state, action) => {
-   
       const p = action.payload || {};
       state.user = p.user ?? null;
       state.token = p.token ?? null;
+
+      // Persist to localStorage
+      if (state.token && state.user) {
+        localStorage.setItem("token", state.token);
+        localStorage.setItem(
+          "storyverse_auth",
+          JSON.stringify({ token: state.token, user: state.user })
+        );
+      } else {
+        // Clear localStorage on logout
+        localStorage.removeItem("token");
+        localStorage.removeItem("storyverse_auth");
+      }
     },
   },
 });

@@ -10,8 +10,25 @@ configureDB();
 const app = express();
 
 
+// CORS configuration for Render.com deployment
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  "https://book-publishing-frontend.onrender.com",
+  "http://localhost:5173",  // Vite dev server
+  "http://localhost:3000",  // Alternative local port
+];
+
 app.use(cors({
-  origin: true,         
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`Origin ${origin} not allowed by CORS`));
+    }
+  },
   credentials: true,
 }));
 

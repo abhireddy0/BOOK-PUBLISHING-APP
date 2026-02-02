@@ -22,6 +22,13 @@ export default function BookDetail() {
   const finalToken = token || localStorage.getItem("token");
   const isLoggedIn = !!finalToken;
 
+  // Debug: Log token availability
+  useEffect(() => {
+    console.log("Token from Redux:", token);
+    console.log("Token from localStorage:", localStorage.getItem("token"));
+    console.log("Final token:", finalToken);
+  }, [token, finalToken]);
+
   // Author check uses _id on both sides (supports populated or plain id)
   const isAuthor =
     !!user && !!book && String(book.author?._id || book.author) === String(user?._id);
@@ -267,7 +274,7 @@ export default function BookDetail() {
                   </div>
                 </div>
 
-                {canDownload && (
+                {canDownload && finalToken && (
                   <div className="mt-3">
                     <a
                       href={`${serverUrl}/books/read/${book._id}?token=${finalToken}`}
@@ -278,6 +285,20 @@ export default function BookDetail() {
                       <FiBookOpen className="text-sm" />
                       Read / Download book
                     </a>
+                  </div>
+                )}
+                {canDownload && !finalToken && (
+                  <div className="mt-3">
+                    <button
+                      onClick={() => {
+                        toast.error("Session expired. Please login again.");
+                        nav("/login");
+                      }}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-500/60 bg-red-500/10 px-4 py-2 text-xs md:text-sm font-medium text-red-100 hover:bg-red-500/20 transition"
+                    >
+                      <FiBookOpen className="text-sm" />
+                      Session expired - Please login
+                    </button>
                   </div>
                 )}
               </div>
@@ -310,7 +331,7 @@ export default function BookDetail() {
                 </button>
               )}
 
-              {canDownload && (
+              {canDownload && finalToken && (
                 <a
                   href={`${serverUrl}/books/read/${book._id}?token=${finalToken}`}
                   target="_blank"
@@ -319,6 +340,17 @@ export default function BookDetail() {
                 >
                   Start reading now
                 </a>
+              )}
+              {canDownload && !finalToken && (
+                <button
+                  onClick={() => {
+                    toast.error("Session expired. Please login again.");
+                    nav("/login");
+                  }}
+                  className="mt-2 inline-flex w-full items-center justify-center rounded-xl bg-red-500 text-slate-950 text-xs md:text-sm font-semibold h-11 hover:bg-red-400 transition shadow-lg shadow-emerald-500/30"
+                >
+                  Session expired - Login again
+                </button>
               )}
 
               {!isPublished && (

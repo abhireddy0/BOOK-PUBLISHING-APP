@@ -1,0 +1,46 @@
+services:
+  # Backend API Service
+  - type: web
+    name: book-publishing-api
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3990
+      - key: MONGO_URI
+        sync: false  # Set in Render dashboard (secret)
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false  # Set in Render dashboard (secret)
+      - key: CLOUDINARY_API_KEY
+        sync: false  # Set in Render dashboard (secret)
+      - key: CLOUDINARY_API_SECRET
+        sync: false  # Set in Render dashboard (secret)
+      - key: RAZORPAY_KEY_ID
+        sync: false  # Set in Render dashboard (secret)
+      - key: RAZORPAY_KEY_SECRET
+        sync: false  # Set in Render dashboard (secret)
+      - key: CLIENT_URL
+        value: https://book-publishing-frontend.onrender.com
+      - key: GEMINI_API_KEY
+        sync: false  # Set in Render dashboard (secret)
+      - key: EMAIL
+        value: abhishekreddy87988@gmail.com
+      - key: EMAIL_PASS
+        sync: false  # Set in Render dashboard (secret)
+      - key: JWT_SECRET
+        generateValue: true  # Render will auto-generate this
+
+  # Frontend Static Site
+  - type: web
+    name: book-publishing-frontend
+    runtime: static
+    rootDir: frontend/book-app
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://book-publishing-api.onrender.com
