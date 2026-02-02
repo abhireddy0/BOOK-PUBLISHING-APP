@@ -9,6 +9,8 @@ configureDB();
 
 const app = express();
 
+// Trust Render.com proxy headers
+app.set('trust proxy', true);
 
 // CORS configuration for Render.com deployment
 const allowedOrigins = [
@@ -20,7 +22,7 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
+ 
     if (!origin) return callback(null, true);
 
     if (allowedOrigins.includes(origin)) {
@@ -34,6 +36,9 @@ app.use(cors({
 
 app.use(express.json());
 
+// Request logging for debugging
+const requestLogger = require('./middleware/requestLogger');
+app.use(requestLogger);
 
 const AuthRouter = require("./routes/authRoutes");
 const BookRouter = require("./routes/bookRoutes");
@@ -50,7 +55,7 @@ app.use("/", ReviewRouter);
 app.use("/", OrderRouter);
 app.use("/dashboard", dashboardRoutes);
 app.use("/gemini", GeminiRouter);
-app.use("/status",(req,res)=>{res.send(200)})
+app.use("/status",(req,res)=>{res.status(200).send('OK')})
 app.use("/users", require("./routes/userRoutes"));
 app.use("/payments", PaymentRouter);
 

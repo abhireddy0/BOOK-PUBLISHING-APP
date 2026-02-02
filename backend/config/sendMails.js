@@ -5,6 +5,16 @@ const nodemailer = require("nodemailer");
 const EMAIL = (process.env.EMAIL || "").trim();
 const EMAIL_PASS = (process.env.EMAIL_PASS || "").trim().replace(/\s+/g, "");
 
+// Timeout wrapper to prevent indefinite hangs
+function withTimeout(promise, timeoutMs, errorMessage) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(errorMessage)), timeoutMs)
+    )
+  ]);
+}
+
 function buildTransporter({ port, secure }) {
   return nodemailer.createTransport({
     host: "smtp.gmail.com",
@@ -32,7 +42,7 @@ async function trySend(transporter, mail, portInfo) {
   }
 }
 
-async function sendMail(to, otp) {
+async function sendMailInternal(to, otp) {
   if (!EMAIL || !EMAIL_PASS) {
     throw new Error("EMAIL/EMAIL_PASS missing. Use Gmail App Password (2-Step Verification).");
   }
@@ -48,6 +58,28 @@ async function sendMail(to, otp) {
   } catch (e465) {
     const t587 = buildTransporter({ port: 587, secure: false });
     return await trySend(t587, mail, "port 587 (STARTTLS)");
+  }
+}
+
+async function sendMail(to, otp) {
+  try {
+    // Validate inputs
+    if (!to || !otp) {
+      throw new Error("Email and OTP are required");
+    }
+
+    // Wrap entire operation with 25s timeout
+    return await withTimeout(
+      sendMailInternal(to, otp),
+      25000,
+      'Email sending timed out after 25 seconds'
+    );
+  } catch (error) {
+    if (error.message.includes('timed out')) {
+      console.error('[Email] Operation timeout:', error.message);
+      throw new Error('Email service timeout. Please try again in a moment.');
+    }
+    throw error;
   }
 }
 

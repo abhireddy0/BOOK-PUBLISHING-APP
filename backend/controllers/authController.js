@@ -109,17 +109,51 @@ const sendOtp = async (req, res) => {
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
+    // Save OTP to database
     user.resetOtp = otp;
     user.otpExpires = Date.now() + 5 * 60 * 1000;
     user.isOtpVerified = false;
     await user.save();
 
-    await sendMail(user.email, otp);
+    // Try to send email with specific error handling
+    try {
+      await sendMail(user.email, otp);
+      console.log(`[OTP] Successfully sent to ${user.email}`);
+      return res.status(200).json({
+        message: "OTP sent successfully. Please check your email."
+      });
+    } catch (emailError) {
+      console.error(`[OTP] Email send failed for ${user.email}:`, emailError.message);
 
-    return res.status(200).json({ message: "OTP email sent successfully" });
+      // Handle timeout errors
+      if (emailError.message.includes('timeout') || emailError.message.includes('timed out')) {
+        return res.status(503).json({
+          message: "Email service temporarily unavailable. Please try again in a moment.",
+          retryable: true
+        });
+      }
+
+      // Handle authentication errors (Gmail App Password issues)
+      if (emailError.message.includes('535') || emailError.message.includes('authentication')) {
+        console.error('[OTP] Email authentication failed - check EMAIL_PASS env variable');
+        return res.status(500).json({
+          message: "Email service configuration error. Please contact support.",
+          retryable: false
+        });
+      }
+
+      // Generic email error
+      return res.status(500).json({
+        message: "Failed to send OTP email. Please try again.",
+        retryable: true
+      });
+    }
   } catch (error) {
     console.error("SEND OTP ERROR:", error);
-    return res.status(500).json({ message: `Send OTP error: ${error.message}` });
+    return res.status(500).json({
+      message: "Server error during OTP generation. Please try again.",
+      retryable: true
+    });
   }
 };
 

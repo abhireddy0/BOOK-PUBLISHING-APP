@@ -1,10 +1,21 @@
 const rateLimit = require('express-rate-limit');
 
-// Aggressive rate limit for OTP sending (max 3 per 15 minutes)
+// Email-based key generator for OTP rate limiting
+const otpKeyGenerator = (req) => {
+  const email = req.body?.email?.toLowerCase().trim();
+  return email || req.ip; // fallback to IP if email missing
+};
+
+// Email-based rate limit for OTP sending (max 5 per 15 minutes per email)
 const otpSendLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 3,
-  message: { message: 'Too many OTP requests. Please try again in 15 minutes.' },
+  max: 5, // increased from 3
+  keyGenerator: otpKeyGenerator,
+  skipSuccessfulRequests: true, // only count failed requests
+  message: {
+    message: 'Too many OTP requests for this email. Please try again in 15 minutes.',
+    retryAfter: 15
+  },
   standardHeaders: true,
   legacyHeaders: false,
 });
