@@ -25,12 +25,20 @@ services:
         sync: false  # Set in Render dashboard (secret)
       - key: CLIENT_URL
         value: https://book-publishing-app-ui.vercel.app
-      - key: GEMINI_API_KEY
+      - key: OPENAI_API_KEY
         sync: false  # Set in Render dashboard (secret)
-      - key: EMAIL
+      - key: BREVO_SMTP_HOST
+        value: smtp-relay.brevo.com
+      - key: BREVO_SMTP_PORT
+        value: 587
+      - key: BREVO_SMTP_USER
+        sync: false  # Set in Render dashboard (secret)
+      - key: BREVO_SMTP_PASS
+        sync: false  # Set in Render dashboard (secret)
+      - key: FROM_EMAIL
         value: abhishekreddy87988@gmail.com
-      - key: EMAIL_PASS
-        sync: false  # Set in Render dashboard (secret)
+      - key: FROM_NAME
+        value: StoryVerse
       - key: JWT_SECRET
         generateValue: true  # Render will auto-generate this
 
