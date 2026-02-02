@@ -24,7 +24,7 @@ services:
       - key: RAZORPAY_KEY_SECRET
         sync: false  # Set in Render dashboard (secret)
       - key: CLIENT_URL
-        value: https://book-publishing-frontend.onrender.com
+        value: https://book-publishing-app-11.onrender.com
       - key: GEMINI_API_KEY
         sync: false  # Set in Render dashboard (secret)
       - key: EMAIL
@@ -43,4 +43,4 @@ services:
     staticPublishPath: dist
     envVars:
       - key: VITE_API_URL
-        value: https://book-publishing-api.onrender.com
+        value: https://book-publishing-app-0t04.onrender.com

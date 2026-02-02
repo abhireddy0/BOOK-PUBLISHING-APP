@@ -8,9 +8,8 @@ async function configureDB(){
 
          
     } catch (err) {
-    console.log(' Error connecting to MongoDB:', err.message );
-     
-        
+        console.error('❌ Error connecting to MongoDB:', err.message);
+        process.exit(1); // Exit if database won't connect
     }
 }
 module.exports = configureDB;

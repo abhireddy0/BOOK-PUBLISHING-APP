@@ -20,8 +20,8 @@ app.set("trust proxy", 1);
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3000",
-  "http://localhost:5174", 
-  "https://book-publishing-app-ui.vercel.app", // ✅ YOUR FRONTEND
+  "http://localhost:5174",
+  "https://book-publishing-app-11.onrender.com", // ✅ PRODUCTION FRONTEND
 ];
 
 /**
